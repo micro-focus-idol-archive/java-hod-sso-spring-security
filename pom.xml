@@ -4,9 +4,58 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
+    <parent>
+        <groupId>com.hp.autonomy.frontend</groupId>
+        <artifactId>foss-master-pom</artifactId>
+        <version>1.0.0</version>
+    </parent>
+
     <groupId>com.hp.autonomy.frontend.hod</groupId>
     <artifactId>hod-sso-spring-security</artifactId>
     <version>0.1.0-SNAPSHOT</version>
 
+    <name>HP Haven OnDemand SSO Spring Security</name>
+    <description>Library to assist with using HP Haven OnDemand SSO with Spring Security</description>
+    <url>https://github.com/hpautonomy/hod-sso-spring-security</url>
+
+    <organization>
+        <name>Hewlett-Packard Development Company, L.P.</name>
+        <url>http://www.hp.com/</url>
+    </organization>
+
+    <inceptionYear>2015</inceptionYear>
+
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>http://www.opensource.org/licenses/mit-license.php</url>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <name>Matthew Gordon</name>
+            <email>matthew.gordon@hp.com</email>
+            <organization>HP</organization>
+            <organizationUrl>http://www.hp.com</organizationUrl>
+        </developer>
+        <developer>
+            <name>Alex Scown</name>
+            <email>alex.scown@hp.com</email>
+            <organization>HP</organization>
+            <organizationUrl>http://www.hp.com</organizationUrl>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:git@github.com:hpautonomy/hod-sso-spring-security.git</connection>
+        <developerConnection>scm:git:git@github.com:hpautonomy/hod-sso-spring-security.git</developerConnection>
+        <url>git@github.com:hpautonomy/hod-sso-spring-security.git</url>
+    </scm>
+
+    <issueManagement>
+        <system>GitHub</system>
+        <url>https://github.com/hpautonomy/hod-sso-spring-security/issues</url>
+    </issueManagement>
 
 </project>
