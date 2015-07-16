@@ -5,7 +5,6 @@
 
 package com.hp.autonomy.hod.sso;
 
-import com.hp.autonomy.frontend.abc.beanconfiguration.HostedCondition;
 import com.hp.autonomy.frontend.configuration.ConfigService;
 import com.hp.autonomy.hod.client.api.authentication.ApiKey;
 import com.hp.autonomy.hod.client.api.authentication.AuthenticationService;
@@ -13,14 +12,9 @@ import com.hp.autonomy.hod.client.api.authentication.AuthenticationToken;
 import com.hp.autonomy.hod.client.error.HodErrorException;
 import org.joda.time.ReadablePeriod;
 import org.joda.time.Seconds;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Conditional;
-import org.springframework.stereotype.Service;
 
 import java.util.concurrent.atomic.AtomicReference;
 
-@Service
-@Conditional(HostedCondition.class)
 public class UnboundTokenServiceImpl implements UnboundTokenService {
     // Time before token expiry before we fetch a new token
     static final ReadablePeriod EXPIRY_TOLERANCE = Seconds.seconds(10);
@@ -28,11 +22,17 @@ public class UnboundTokenServiceImpl implements UnboundTokenService {
     private final AtomicReference<AuthenticationToken> unboundTokenCache = new AtomicReference<>(null);
     private final Object lock = new Object();
 
-    @Autowired
-    private ConfigService<? extends HodSsoConfig> configService;
+    private final ConfigService<? extends HodSsoConfig> configService;
 
-    @Autowired
-    private AuthenticationService authenticationService;
+    private final AuthenticationService authenticationService;
+
+    public UnboundTokenServiceImpl(
+        final AuthenticationService authenticationService,
+        final ConfigService<? extends HodSsoConfig> configService
+    ) {
+        this.authenticationService = authenticationService;
+        this.configService = configService;
+    }
 
     @Override
     public AuthenticationToken getUnboundToken() throws HodErrorException {

@@ -5,29 +5,31 @@
 
 package com.hp.autonomy.hod.sso;
 
-import com.hp.autonomy.frontend.abc.beanconfiguration.HostedCondition;
 import com.hp.autonomy.frontend.configuration.ConfigService;
 import com.hp.autonomy.hod.client.api.authentication.AuthenticationService;
 import com.hp.autonomy.hod.client.api.authentication.SignedRequest;
 import com.hp.autonomy.hod.client.api.authentication.TokenType;
 import com.hp.autonomy.hod.client.error.HodErrorException;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Conditional;
-import org.springframework.stereotype.Service;
 
 import java.util.Set;
 
-@Service
-@Conditional(HostedCondition.class)
 public class HodAuthenticationRequestServiceImpl implements HodAuthenticationRequestService {
-    @Autowired
-    private ConfigService<? extends HodSsoConfig> configService;
 
-    @Autowired
-    private AuthenticationService authenticationService;
+    private final ConfigService<? extends HodSsoConfig> configService;
 
-    @Autowired
-    private UnboundTokenService unboundTokenService;
+    private final AuthenticationService authenticationService;
+
+    private final UnboundTokenService unboundTokenService;
+
+    public HodAuthenticationRequestServiceImpl(
+        final ConfigService<? extends HodSsoConfig> configService,
+        final AuthenticationService authenticationService,
+        final UnboundTokenService unboundTokenService
+    ) {
+        this.configService = configService;
+        this.authenticationService = authenticationService;
+        this.unboundTokenService = unboundTokenService;
+    }
 
     @Override
     public SignedRequest getListApplicationRequest() throws HodErrorException {

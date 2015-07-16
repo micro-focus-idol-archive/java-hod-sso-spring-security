@@ -20,22 +20,13 @@ import org.joda.time.Seconds;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.mockito.stubbing.OngoingStubbing;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import org.springframework.test.context.support.AnnotationConfigContextLoader;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -51,23 +42,30 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(loader = AnnotationConfigContextLoader.class)
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
-public class UnboundTokenServiceTest {
+public class UnboundTokenServiceImplTest {
     private static final String API_KEY = "123-api-key";
 
     private ExecutorService executorService;
 
-    @Autowired
     private AuthenticationService authenticationService;
 
-    @Autowired
     private UnboundTokenService unboundTokenService;
 
     @Before
     public void setUp() {
         executorService = Executors.newFixedThreadPool(8);
+
+        final HodSsoConfig config = mock(HodSsoConfig.class);
+        when(config.getApiKey()).thenReturn(API_KEY);
+
+        @SuppressWarnings("unchecked")
+        final ConfigService<? extends HodSsoConfig> configService = mock(ConfigService.class);
+
+        when(configService.getConfig()).thenReturn(config);
+
+        authenticationService = mock(AuthenticationService.class);
+
+        unboundTokenService = new UnboundTokenServiceImpl(authenticationService, configService);
     }
 
     @After
@@ -240,28 +238,4 @@ public class UnboundTokenServiceTest {
         }
     }
 
-    @Configuration
-    static class ContextConfiguration {
-        @Bean
-        public ConfigService<? extends HodSsoConfig> configService() {
-            final HodSsoConfig config = mock(HodSsoConfig.class);
-            when(config.getApiKey()).thenReturn(API_KEY);
-
-            @SuppressWarnings("unchecked")
-            final ConfigService<? extends HodSsoConfig> configService = mock(ConfigService.class);
-
-            when(configService.getConfig()).thenReturn(config);
-            return configService;
-        }
-
-        @Bean
-        public AuthenticationService authenticationService() throws HodErrorException {
-            return mock(AuthenticationService.class);
-        }
-
-        @Bean
-        public UnboundTokenService unboundTokenService() {
-            return new UnboundTokenServiceImpl();
-        }
-    }
 }
