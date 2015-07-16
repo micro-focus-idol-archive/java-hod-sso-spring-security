@@ -6,7 +6,6 @@
 package com.hp.autonomy.hod.sso;
 
 import com.hp.autonomy.frontend.abc.beanconfiguration.HostedCondition;
-import com.hp.autonomy.frontend.abc.configuration.AbcHostedConfig;
 import com.hp.autonomy.frontend.configuration.ConfigService;
 import com.hp.autonomy.hod.client.api.authentication.AuthenticationService;
 import com.hp.autonomy.hod.client.api.authentication.SignedRequest;
@@ -22,7 +21,7 @@ import java.util.Set;
 @Conditional(HostedCondition.class)
 public class HodAuthenticationRequestServiceImpl implements HodAuthenticationRequestService {
     @Autowired
-    private ConfigService<AbcHostedConfig> configService;
+    private ConfigService<? extends HodSsoConfig> configService;
 
     @Autowired
     private AuthenticationService authenticationService;

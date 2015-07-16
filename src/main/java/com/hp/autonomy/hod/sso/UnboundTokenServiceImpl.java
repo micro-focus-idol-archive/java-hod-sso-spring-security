@@ -6,7 +6,6 @@
 package com.hp.autonomy.hod.sso;
 
 import com.hp.autonomy.frontend.abc.beanconfiguration.HostedCondition;
-import com.hp.autonomy.frontend.abc.configuration.AbcHostedConfig;
 import com.hp.autonomy.frontend.configuration.ConfigService;
 import com.hp.autonomy.hod.client.api.authentication.ApiKey;
 import com.hp.autonomy.hod.client.api.authentication.AuthenticationService;
@@ -30,7 +29,7 @@ public class UnboundTokenServiceImpl implements UnboundTokenService {
     private final Object lock = new Object();
 
     @Autowired
-    private ConfigService<AbcHostedConfig> configService;
+    private ConfigService<? extends HodSsoConfig> configService;
 
     @Autowired
     private AuthenticationService authenticationService;
@@ -64,6 +63,6 @@ public class UnboundTokenServiceImpl implements UnboundTokenService {
     }
 
     private ApiKey getApiKey() {
-        return new ApiKey(configService.getConfig().getHod().getApiKey());
+        return new ApiKey(configService.getConfig().getApiKey());
     }
 }

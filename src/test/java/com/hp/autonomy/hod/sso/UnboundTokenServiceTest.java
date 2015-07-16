@@ -5,8 +5,6 @@
 
 package com.hp.autonomy.hod.sso;
 
-import com.hp.autonomy.frontend.abc.configuration.AbcHostedConfig;
-import com.hp.autonomy.frontend.abc.configuration.HodConfig;
 import com.hp.autonomy.frontend.configuration.ConfigService;
 import com.hp.autonomy.hod.client.api.authentication.ApiKey;
 import com.hp.autonomy.hod.client.api.authentication.AuthenticationService;
@@ -37,6 +35,7 @@ import org.springframework.test.context.support.AnnotationConfigContextLoader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -244,15 +243,12 @@ public class UnboundTokenServiceTest {
     @Configuration
     static class ContextConfiguration {
         @Bean
-        public ConfigService<AbcHostedConfig> configService() {
-            final HodConfig hod = mock(HodConfig.class);
-            when(hod.getApiKey()).thenReturn(API_KEY);
-
-            final AbcHostedConfig config = mock(AbcHostedConfig.class);
-            when(config.getHod()).thenReturn(hod);
+        public ConfigService<? extends HodSsoConfig> configService() {
+            final HodSsoConfig config = mock(HodSsoConfig.class);
+            when(config.getApiKey()).thenReturn(API_KEY);
 
             @SuppressWarnings("unchecked")
-            final ConfigService<AbcHostedConfig> configService = mock(ConfigService.class);
+            final ConfigService<? extends HodSsoConfig> configService = mock(ConfigService.class);
 
             when(configService.getConfig()).thenReturn(config);
             return configService;
