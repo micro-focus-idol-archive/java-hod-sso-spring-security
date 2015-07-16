@@ -13,6 +13,9 @@ import com.hp.autonomy.hod.client.error.HodErrorException;
 
 import java.util.Set;
 
+/**
+ * Default implementation of HodAuthenticationRequestService
+ */
 public class HodAuthenticationRequestServiceImpl implements HodAuthenticationRequestService {
 
     private final ConfigService<? extends HodSsoConfig> configService;
@@ -21,6 +24,12 @@ public class HodAuthenticationRequestServiceImpl implements HodAuthenticationReq
 
     private final UnboundTokenService unboundTokenService;
 
+    /**
+     * Creates a new HodAuthenticationRequestServiceImpl
+     * @param configService The configuration service which will provide the configuration
+     * @param authenticationService The authentication service to use to sign the requests
+     * @param unboundTokenService The unbound token service used to provide teh unbound token
+     */
     public HodAuthenticationRequestServiceImpl(
         final ConfigService<? extends HodSsoConfig> configService,
         final AuthenticationService authenticationService,

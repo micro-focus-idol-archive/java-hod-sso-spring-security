@@ -14,6 +14,12 @@ import org.springframework.security.core.GrantedAuthority;
 
 import java.util.Collection;
 
+/**
+ * Spring Security Authentication which combines an HP Haven OnDemand {@link TokenProxy} with a username and application
+ * details. This Authentication is authenticated at creation time
+ * For access control decisions, the GrantedAuthorities should be checked for the correct
+ * {@link HodApplicationGrantedAuthority}
+ */
 @EqualsAndHashCode(callSuper = true)
 public class HodAuthentication extends AbstractAuthenticationToken {
     private static final long serialVersionUID = -4998948982652372121L;
@@ -23,6 +29,14 @@ public class HodAuthentication extends AbstractAuthenticationToken {
     private final String domain;
     private final String application;
 
+    /**
+     * Creates a new HodAuthentication
+     * @param combinedTokenProxy The TokenProxy associated with the session
+     * @param authorities The GrantedAuthorities associated with the session
+     * @param username The HP Haven OnDemand username associated with the session
+     * @param domain The HP Haven OnDemand domain associated with the session
+     * @param application The HP Haven OnDemand application associated with the session
+     */
     public HodAuthentication(
             final TokenProxy combinedTokenProxy,
             final Collection<? extends GrantedAuthority> authorities,
@@ -38,33 +52,49 @@ public class HodAuthentication extends AbstractAuthenticationToken {
         this.combinedTokenProxy = combinedTokenProxy;
     }
 
+    /**
+     * This token cannot be re-authenticated, so this method returns null
+     * @return null
+     */
     @Override
     public AuthenticationToken getCredentials() {
         return null;
     }
 
+    /**
+     * @return The HP Haven OnDemand username associated with the session
+     */
     @Override
     public String getPrincipal() {
         return username;
     }
 
     /**
-     * Note: This is not sufficient for access control decisions, the GrantedAuthorities should be checked for the correct
-     * {@link HodApplicationGrantedAuthority} instead.
-     * @return The HOD application associated with the user
+     * @return The HP Haven OnDemand application associated with the session
      */
     public String getApplication() {
         return application;
     }
 
+    /**
+     * @return The HP Haven OnDemand domain associated with the session
+     */
     public String getDomain() {
         return domain;
     }
 
+    /**
+     * @return The {@link TokenProxy} associated with the session
+     */
     public TokenProxy getTokenProxy() {
         return combinedTokenProxy;
     }
 
+    /**
+     * Sets the trusted state of the token. This can only be set to false
+     * @param isAuthenticated True if the token should be trusted; false otherwise
+     * @throws IllegalArgumentException If isAuthenticated is set to true
+     */
     @Override
     public void setAuthenticated(final boolean isAuthenticated) {
         if (isAuthenticated) {

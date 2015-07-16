@@ -8,8 +8,15 @@ package com.hp.autonomy.hod.sso;
 import com.hp.autonomy.hod.client.api.authentication.AuthenticationToken;
 import com.hp.autonomy.hod.client.error.HodErrorException;
 
+/**
+ * Service for retrieving an unbound authentication token from HP Haven OnDemand
+ */
 public interface UnboundTokenService {
 
+    /**
+     * @return An unbound token from HP Haven OnDemand
+     * @throws HodErrorException
+     */
     AuthenticationToken getUnboundToken() throws HodErrorException;
 
 }

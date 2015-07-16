@@ -25,17 +25,32 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import java.io.IOException;
 import java.util.Collection;
 
+/**
+ * AuthenticationProvider which consumes {@link HodTokenAuthentication} and produces {@link HodAuthentication}
+ */
 public class HodAuthenticationProvider implements AuthenticationProvider {
     private final String role;
     private final TokenRepository tokenRepository;
     private final AuthenticationService authenticationService;
 
+    /**
+     * Creates a new HodAuthenticationProvider
+     * @param tokenRepository The token repository in which to store the HP Haven OnDemand Token
+     * @param role The role to assign to users authenticated with HP Haven OnDemand SSO
+     * @param authenticationService The authentication service that will perform the authentication
+     */
     public HodAuthenticationProvider(final TokenRepository tokenRepository, final String role, final AuthenticationService authenticationService) {
         this.role = role;
         this.tokenRepository = tokenRepository;
         this.authenticationService = authenticationService;
     }
 
+    /**
+     * Authenticates the given authentication
+     * @param authentication The authentication to authenticate. This should be a HodTokenAuthentication
+     * @return A HodAuthentication based on the given HodTokenAuthentication
+     * @throws AuthenticationException if authentication fails
+     */
     @Override
     public Authentication authenticate(final Authentication authentication) throws AuthenticationException {
         final AuthenticationToken combinedToken = ((HodTokenAuthentication) authentication).getCredentials();
@@ -63,7 +78,7 @@ public class HodAuthenticationProvider implements AuthenticationProvider {
 
         final ResourceIdentifier applicationIdentifier = combinedTokenDetails.getApplication();
 
-        // Give user access to load ISO (via the role) and permission to access resources associated with the HOD application
+        // Give user access to load the webapp (via the role) and permission to access resources associated with the HOD application
         final Collection<GrantedAuthority> grantedAuthorities = ImmutableSet.<GrantedAuthority>builder()
                 .add(new SimpleGrantedAuthority(role))
                 .add(new HodApplicationGrantedAuthority(applicationIdentifier))
@@ -78,6 +93,11 @@ public class HodAuthenticationProvider implements AuthenticationProvider {
         );
     }
 
+    /**
+     * Test if the authentication provider supports a particular authentication class
+     * @param authenticationClass The class to test
+     * @return True is the class is assignable from HodTokenAuthentication; false otherwise
+     */
     @Override
     public boolean supports(final Class<?> authenticationClass) {
         return HodTokenAuthentication.class.isAssignableFrom(authenticationClass);

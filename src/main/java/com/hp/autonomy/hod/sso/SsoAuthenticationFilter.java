@@ -34,7 +34,7 @@ public class SsoAuthenticationFilter extends AbstractAuthenticationProcessingFil
             throw new BadCredentialsException("Invalid user unbound token");
         }
 
-        final AuthenticationToken userUnboundToken = new AuthenticationToken(
+        final AuthenticationToken token = new AuthenticationToken(
                 expiry,
                 request.getParameter("id"),
                 request.getParameter("secret"),
@@ -42,6 +42,6 @@ public class SsoAuthenticationFilter extends AbstractAuthenticationProcessingFil
                 startRefresh
         );
 
-        return getAuthenticationManager().authenticate(new HodTokenAuthentication(userUnboundToken));
+        return getAuthenticationManager().authenticate(new HodTokenAuthentication(token));
     }
 }

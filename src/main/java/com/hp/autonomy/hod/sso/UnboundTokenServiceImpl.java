@@ -15,6 +15,11 @@ import org.joda.time.Seconds;
 
 import java.util.concurrent.atomic.AtomicReference;
 
+/**
+ * Default implementation of UnboundTokenService. This implementation will cache the unbound token until it expires.
+ *
+ * This class is thread safe.
+ */
 public class UnboundTokenServiceImpl implements UnboundTokenService {
     // Time before token expiry before we fetch a new token
     static final ReadablePeriod EXPIRY_TOLERANCE = Seconds.seconds(10);
@@ -26,6 +31,11 @@ public class UnboundTokenServiceImpl implements UnboundTokenService {
 
     private final AuthenticationService authenticationService;
 
+    /**
+     * Creates a new UnboundTokenServiceImpl
+     * @param authenticationService The authentication service to use to require the unbound token
+     * @param configService The service used to obtain the configuration
+     */
     public UnboundTokenServiceImpl(
         final AuthenticationService authenticationService,
         final ConfigService<? extends HodSsoConfig> configService
