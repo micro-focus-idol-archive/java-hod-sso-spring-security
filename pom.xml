@@ -4,9 +4,131 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
+    <parent>
+        <groupId>com.hp.autonomy.frontend</groupId>
+        <artifactId>foss-master-pom</artifactId>
+        <version>1.0.0</version>
+    </parent>
+
     <groupId>com.hp.autonomy.frontend.hod</groupId>
     <artifactId>hod-sso-spring-security</artifactId>
     <version>0.1.0-SNAPSHOT</version>
+
+    <name>HP Haven OnDemand SSO Spring Security</name>
+    <description>Library to assist with using HP Haven OnDemand SSO with Spring Security</description>
+    <url>https://github.com/hpautonomy/hod-sso-spring-security</url>
+
+    <organization>
+        <name>Hewlett-Packard Development Company, L.P.</name>
+        <url>http://www.hp.com/</url>
+    </organization>
+
+    <inceptionYear>2015</inceptionYear>
+
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>http://www.opensource.org/licenses/mit-license.php</url>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <name>Matthew Gordon</name>
+            <email>matthew.gordon@hp.com</email>
+            <organization>HP</organization>
+            <organizationUrl>http://www.hp.com</organizationUrl>
+        </developer>
+        <developer>
+            <name>Alex Scown</name>
+            <email>alex.scown@hp.com</email>
+            <organization>HP</organization>
+            <organizationUrl>http://www.hp.com</organizationUrl>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:git@github.com:hpautonomy/hod-sso-spring-security.git</connection>
+        <developerConnection>scm:git:git@github.com:hpautonomy/hod-sso-spring-security.git</developerConnection>
+        <url>git@github.com:hpautonomy/hod-sso-spring-security.git</url>
+    </scm>
+
+    <issueManagement>
+        <system>GitHub</system>
+        <url>https://github.com/hpautonomy/hod-sso-spring-security/issues</url>
+    </issueManagement>
+
+    <properties>
+        <org.springframework.security.version>4.0.1.RELEASE</org.springframework.security.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.security</groupId>
+                <artifactId>spring-security-bom</artifactId>
+                <version>${org.springframework.security.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.hp.autonomy.hod</groupId>
+            <artifactId>java-hod-client</artifactId>
+            <version>0.10.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>18.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.hp.autonomy.frontend.configuration</groupId>
+            <artifactId>configuration-api</artifactId>
+            <version>1.0.1</version>
+        </dependency>
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>servlet-api</artifactId>
+            <version>2.5</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.14.2</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.12</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>1.10.19</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.hamcrest</groupId>
+            <artifactId>hamcrest-all</artifactId>
+            <version>1.3</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
 
 
 </project>
