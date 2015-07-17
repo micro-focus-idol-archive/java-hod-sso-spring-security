@@ -10,7 +10,7 @@
         <version>1.0.0</version>
     </parent>
 
-    <groupId>com.hp.autonomy.frontend.hod</groupId>
+    <groupId>com.hp.autonomy.hod</groupId>
     <artifactId>hod-sso-spring-security</artifactId>
     <version>0.1.0-SNAPSHOT</version>
 
