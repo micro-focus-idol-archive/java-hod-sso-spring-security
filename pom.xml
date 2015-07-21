@@ -5,9 +5,9 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>com.hp.autonomy.frontend</groupId>
+        <groupId>com.hp.autonomy</groupId>
         <artifactId>foss-master-pom</artifactId>
-        <version>1.0.0</version>
+        <version>1.0.1</version>
     </parent>
 
     <groupId>com.hp.autonomy.hod</groupId>
