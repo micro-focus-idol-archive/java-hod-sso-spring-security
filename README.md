@@ -41,7 +41,7 @@ methods on HodAuthenticationRequestService to an HTTP endpoint.
                     .and()
                 .addFilterAfter(ssoAuthenticationFilter(), AbstractPreAuthenticatedProcessingFilter.class)
                 .logout()
-                    .disable();
+                    .logoutSuccessHandler(new HodTokenLogoutSuccessHandler("/sso-logout", tokenRepository));
         }
     
         @Bean
