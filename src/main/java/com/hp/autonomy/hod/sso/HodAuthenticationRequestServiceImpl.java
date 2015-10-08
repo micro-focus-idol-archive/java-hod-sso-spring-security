@@ -22,7 +22,7 @@ public class HodAuthenticationRequestServiceImpl implements HodAuthenticationReq
 
     private final AuthenticationService authenticationService;
 
-    private final UnboundTokenService unboundTokenService;
+    private final UnboundTokenService<TokenType.HmacSha1> unboundTokenService;
 
     /**
      * Creates a new HodAuthenticationRequestServiceImpl
@@ -33,7 +33,7 @@ public class HodAuthenticationRequestServiceImpl implements HodAuthenticationReq
     public HodAuthenticationRequestServiceImpl(
         final ConfigService<? extends HodSsoConfig> configService,
         final AuthenticationService authenticationService,
-        final UnboundTokenService unboundTokenService
+        final UnboundTokenService<TokenType.HmacSha1> unboundTokenService
     ) {
         this.configService = configService;
         this.authenticationService = authenticationService;
@@ -53,14 +53,14 @@ public class HodAuthenticationRequestServiceImpl implements HodAuthenticationReq
             final String userStoreName
     ) throws HodErrorException {
         return authenticationService.combinedRequest(
-                getAllowedOrigins(),
-                unboundTokenService.getUnboundToken(),
-                domain,
-                application,
-                userStoreDomain,
-                userStoreName,
-                TokenType.simple,
-                true
+            getAllowedOrigins(),
+            unboundTokenService.getUnboundToken(),
+            domain,
+            application,
+            userStoreDomain,
+            userStoreName,
+            TokenType.Simple.INSTANCE,
+            true
         );
     }
 

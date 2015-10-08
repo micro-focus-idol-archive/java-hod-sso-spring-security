@@ -6,7 +6,8 @@
 package com.hp.autonomy.hod.sso;
 
 import com.hp.autonomy.hod.client.api.authentication.AuthenticationToken;
-import com.hp.autonomy.hod.client.api.resource.ResourceIdentifier;
+import com.hp.autonomy.hod.client.api.authentication.EntityType;
+import com.hp.autonomy.hod.client.api.authentication.TokenType;
 import com.hp.autonomy.hod.client.token.TokenProxy;
 import lombok.EqualsAndHashCode;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
@@ -24,7 +25,7 @@ import java.util.Collection;
 public class HodAuthentication extends AbstractAuthenticationToken {
     private static final long serialVersionUID = -4998948982652372121L;
 
-    private final TokenProxy combinedTokenProxy;
+    private final TokenProxy<EntityType.Combined, TokenType.Simple> combinedTokenProxy;
     private final String username;
     private final String domain;
     private final String application;
@@ -38,7 +39,7 @@ public class HodAuthentication extends AbstractAuthenticationToken {
      * @param application The HP Haven OnDemand application associated with the session
      */
     public HodAuthentication(
-            final TokenProxy combinedTokenProxy,
+            final TokenProxy<EntityType.Combined, TokenType.Simple> combinedTokenProxy,
             final Collection<? extends GrantedAuthority> authorities,
             final String username,
             final String domain,
@@ -57,7 +58,7 @@ public class HodAuthentication extends AbstractAuthenticationToken {
      * @return null
      */
     @Override
-    public AuthenticationToken getCredentials() {
+    public AuthenticationToken<?, ?> getCredentials() {
         return null;
     }
 
@@ -86,7 +87,7 @@ public class HodAuthentication extends AbstractAuthenticationToken {
     /**
      * @return The {@link TokenProxy} associated with the session
      */
-    public TokenProxy getTokenProxy() {
+    public TokenProxy<EntityType.Combined, TokenType.Simple> getTokenProxy() {
         return combinedTokenProxy;
     }
 

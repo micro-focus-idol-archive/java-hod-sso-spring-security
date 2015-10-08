@@ -9,6 +9,8 @@ import com.hp.autonomy.frontend.configuration.ConfigService;
 import com.hp.autonomy.hod.client.api.authentication.ApiKey;
 import com.hp.autonomy.hod.client.api.authentication.AuthenticationService;
 import com.hp.autonomy.hod.client.api.authentication.AuthenticationToken;
+import com.hp.autonomy.hod.client.api.authentication.EntityType;
+import com.hp.autonomy.hod.client.api.authentication.TokenType;
 import com.hp.autonomy.hod.client.error.HodErrorException;
 import org.joda.time.ReadablePeriod;
 import org.joda.time.Seconds;
@@ -20,15 +22,15 @@ import java.util.concurrent.atomic.AtomicReference;
  *
  * This class is thread safe.
  */
-public class UnboundTokenServiceImpl implements UnboundTokenService {
+public class UnboundTokenServiceImpl<T extends TokenType> implements UnboundTokenService<T> {
     // Time before token expiry before we fetch a new token
     static final ReadablePeriod EXPIRY_TOLERANCE = Seconds.seconds(10);
 
-    private final AtomicReference<AuthenticationToken> unboundTokenCache = new AtomicReference<>(null);
+    private final AtomicReference<AuthenticationToken<EntityType.Unbound, T>> unboundTokenCache = new AtomicReference<>(null);
     private final Object lock = new Object();
 
     private final ConfigService<? extends HodSsoConfig> configService;
-
+    private final T tokenType;
     private final AuthenticationService authenticationService;
 
     /**
@@ -38,15 +40,17 @@ public class UnboundTokenServiceImpl implements UnboundTokenService {
      */
     public UnboundTokenServiceImpl(
         final AuthenticationService authenticationService,
-        final ConfigService<? extends HodSsoConfig> configService
+        final ConfigService<? extends HodSsoConfig> configService,
+        final T tokenType
     ) {
         this.authenticationService = authenticationService;
         this.configService = configService;
+        this.tokenType = tokenType;
     }
 
     @Override
-    public AuthenticationToken getUnboundToken() throws HodErrorException {
-        AuthenticationToken unboundToken = unboundTokenCache.get();
+    public AuthenticationToken<EntityType.Unbound, T> getUnboundToken() throws HodErrorException {
+        AuthenticationToken<EntityType.Unbound, T> unboundToken = unboundTokenCache.get();
 
         if (isTokenValid(unboundToken)) {
             return unboundToken;
@@ -58,7 +62,7 @@ public class UnboundTokenServiceImpl implements UnboundTokenService {
                 if (isTokenValid(unboundToken)) {
                     return unboundToken;
                 } else {
-                    unboundToken = authenticationService.authenticateUnbound(getApiKey());
+                    unboundToken = authenticationService.authenticateUnbound(getApiKey(), tokenType);
 
                     unboundTokenCache.set(unboundToken);
 
@@ -68,7 +72,7 @@ public class UnboundTokenServiceImpl implements UnboundTokenService {
         }
     }
 
-    private boolean isTokenValid(final AuthenticationToken unboundToken) {
+    private boolean isTokenValid(final AuthenticationToken<EntityType.Unbound, T> unboundToken) {
         return unboundToken != null && unboundToken.getExpiry().minus(EXPIRY_TOLERANCE).isAfterNow();
     }
 

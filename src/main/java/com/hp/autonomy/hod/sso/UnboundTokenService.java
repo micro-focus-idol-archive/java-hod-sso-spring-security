@@ -6,17 +6,20 @@
 package com.hp.autonomy.hod.sso;
 
 import com.hp.autonomy.hod.client.api.authentication.AuthenticationToken;
+import com.hp.autonomy.hod.client.api.authentication.EntityType;
+import com.hp.autonomy.hod.client.api.authentication.TokenType;
 import com.hp.autonomy.hod.client.error.HodErrorException;
 
 /**
  * Service for retrieving an unbound authentication token from HP Haven OnDemand
+ * @param <T> The type of unbound token returned by this service
  */
-public interface UnboundTokenService {
+public interface UnboundTokenService<T extends TokenType> {
 
     /**
      * @return An unbound token from HP Haven OnDemand
      * @throws HodErrorException
      */
-    AuthenticationToken getUnboundToken() throws HodErrorException;
+    AuthenticationToken<EntityType.Unbound, T> getUnboundToken() throws HodErrorException;
 
 }
