@@ -26,6 +26,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.UUID;
 
 /**
  * AuthenticationProvider which consumes {@link HodTokenAuthentication} and produces {@link HodAuthentication}
@@ -34,17 +35,25 @@ public class HodAuthenticationProvider implements AuthenticationProvider {
     private final String role;
     private final TokenRepository tokenRepository;
     private final AuthenticationService authenticationService;
+    private final UUID unboundAuthenticationUuid;
 
     /**
      * Creates a new HodAuthenticationProvider
      * @param tokenRepository The token repository in which to store the HP Haven OnDemand Token
      * @param role The role to assign to users authenticated with HP Haven OnDemand SSO
      * @param authenticationService The authentication service that will perform the authentication
+     * @param unboundTokenService The unbound token service to get the unbound authentication UUID from
      */
-    public HodAuthenticationProvider(final TokenRepository tokenRepository, final String role, final AuthenticationService authenticationService) {
+    public HodAuthenticationProvider(
+        final TokenRepository tokenRepository,
+        final String role,
+        final AuthenticationService authenticationService,
+        final UnboundTokenService<TokenType.HmacSha1> unboundTokenService
+    ) {
         this.role = role;
         this.tokenRepository = tokenRepository;
         this.authenticationService = authenticationService;
+        unboundAuthenticationUuid = unboundTokenService.getAuthenticationUuid();
     }
 
     /**
@@ -68,7 +77,10 @@ public class HodAuthenticationProvider implements AuthenticationProvider {
             }
         }
 
-        // TODO: Verify the combined token once IOD-6246 is complete (CCUK-3314)
+        if (!unboundAuthenticationUuid.equals(combinedTokenInformation.getApplication().getAuthentication().getUuid())) {
+            // The provided combined token was not generated with our unbound token
+            throw new BadCredentialsException("Invalid combined token");
+        }
 
         final TokenProxy<EntityType.Combined, TokenType.Simple> combinedTokenProxy;
 

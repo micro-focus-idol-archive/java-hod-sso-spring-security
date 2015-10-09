@@ -9,8 +9,11 @@ import com.hp.autonomy.frontend.configuration.ConfigService;
 import com.hp.autonomy.hod.client.api.authentication.ApiKey;
 import com.hp.autonomy.hod.client.api.authentication.AuthenticationService;
 import com.hp.autonomy.hod.client.api.authentication.AuthenticationToken;
+import com.hp.autonomy.hod.client.api.authentication.AuthenticationType;
 import com.hp.autonomy.hod.client.api.authentication.EntityType;
 import com.hp.autonomy.hod.client.api.authentication.TokenType;
+import com.hp.autonomy.hod.client.api.authentication.tokeninformation.AuthenticationInformation;
+import com.hp.autonomy.hod.client.api.authentication.tokeninformation.UnboundTokenInformation;
 import com.hp.autonomy.hod.client.error.HodError;
 import com.hp.autonomy.hod.client.error.HodErrorException;
 import org.joda.time.DateTime;
@@ -47,6 +50,7 @@ import static org.mockito.Mockito.when;
 
 public class UnboundTokenServiceImplTest {
     private static final String API_KEY = "123-api-key";
+    private static final UUID AUTH_UUID = UUID.randomUUID();
 
     private ExecutorService executorService;
 
@@ -55,7 +59,7 @@ public class UnboundTokenServiceImplTest {
     private UnboundTokenService<TokenType.HmacSha1> unboundTokenService;
 
     @Before
-    public void setUp() {
+    public void setUp() throws HodErrorException, InterruptedException {
         executorService = Executors.newFixedThreadPool(8);
 
         final HodSsoConfig config = mock(HodSsoConfig.class);
@@ -68,7 +72,13 @@ public class UnboundTokenServiceImplTest {
 
         authenticationService = mock(AuthenticationService.class);
 
-        unboundTokenService = new UnboundTokenServiceImpl<>(authenticationService, configService, TokenType.HmacSha1.INSTANCE);
+        final AuthenticationToken<EntityType.Unbound, TokenType.HmacSha1> initialToken = createToken(Seconds.ZERO);
+        mockAuthenticateUnbound().thenReturn(initialToken);
+
+        final UnboundTokenInformation tokenInformation = new UnboundTokenInformation(new AuthenticationInformation(AUTH_UUID, AuthenticationType.LEGACY_API_KEY));
+        when(authenticationService.getHmacUnboundTokenInformation(initialToken)).thenReturn(tokenInformation);
+
+        unboundTokenService = new UnboundTokenServiceImpl(authenticationService, configService);
     }
 
     @After
@@ -77,7 +87,12 @@ public class UnboundTokenServiceImplTest {
     }
 
     @Test
-    public void getsUnboundToken() throws InterruptedException, HodErrorException {
+    public void getsAuthenticationUUID() {
+        assertThat(unboundTokenService.getAuthenticationUuid(), is(AUTH_UUID));
+    }
+
+    @Test
+    public void getsNewUnboundToken() throws InterruptedException, HodErrorException {
         final CountDownLatch latch = new CountDownLatch(1);
         final List<UnboundTokenOutput> outputs = Collections.synchronizedList(new ArrayList<UnboundTokenOutput>());
 
@@ -88,7 +103,7 @@ public class UnboundTokenServiceImplTest {
         latch.await();
 
         assertThat(outputs, hasSize(1));
-        verify(authenticationService, times(1)).authenticateUnbound(any(ApiKey.class), eq(TokenType.HmacSha1.INSTANCE));
+        verify(authenticationService, times(2)).authenticateUnbound(any(ApiKey.class), eq(TokenType.HmacSha1.INSTANCE));
         checkOutput(outputs.get(0), unboundToken, null);
     }
 
@@ -108,7 +123,7 @@ public class UnboundTokenServiceImplTest {
         latch.await();
 
         assertThat(outputs, hasSize(times));
-        verify(authenticationService, times(1)).authenticateUnbound(any(ApiKey.class), eq(TokenType.HmacSha1.INSTANCE));
+        verify(authenticationService, times(2)).authenticateUnbound(any(ApiKey.class), eq(TokenType.HmacSha1.INSTANCE));
 
         for (int i = 0; i < times; i++) {
             checkOutput(outputs.get(i), unboundToken, null);
@@ -131,7 +146,7 @@ public class UnboundTokenServiceImplTest {
         latch.await();
 
         assertThat(outputs, hasSize(3));
-        verify(authenticationService, times(2)).authenticateUnbound(any(ApiKey.class), eq(TokenType.HmacSha1.INSTANCE));
+        verify(authenticationService, times(3)).authenticateUnbound(any(ApiKey.class), eq(TokenType.HmacSha1.INSTANCE));
 
         checkOutput(outputs.get(0), null, exception);
         checkOutput(outputs.get(1), unboundToken, null);
@@ -159,7 +174,7 @@ public class UnboundTokenServiceImplTest {
         latch2.await();
 
         assertThat(outputs, hasSize(2));
-        verify(authenticationService, times(2)).authenticateUnbound(any(ApiKey.class), eq(TokenType.HmacSha1.INSTANCE));
+        verify(authenticationService, times(3)).authenticateUnbound(any(ApiKey.class), eq(TokenType.HmacSha1.INSTANCE));
 
         checkOutput(outputs.get(0), expiredUnboundToken, null);
         checkOutput(outputs.get(1), newToken, null);
