@@ -5,6 +5,8 @@
 
 package com.hp.autonomy.hod.sso;
 
+import com.hp.autonomy.hod.client.api.authentication.EntityType;
+import com.hp.autonomy.hod.client.api.authentication.TokenType;
 import com.hp.autonomy.hod.client.token.TokenProxy;
 import com.hp.autonomy.hod.client.token.TokenProxyService;
 import org.springframework.security.core.Authentication;
@@ -14,10 +16,10 @@ import org.springframework.security.core.context.SecurityContextHolder;
  * {@link TokenProxyService} which retrieves the token proxy from the Spring Security Context if the stored
  * authentication is a {@link HodAuthentication}.
  */
-public class SpringSecurityTokenProxyService implements TokenProxyService {
+public class SpringSecurityTokenProxyService implements TokenProxyService<EntityType.Combined, TokenType.Simple> {
 
     @Override
-    public TokenProxy getTokenProxy() {
+    public TokenProxy<EntityType.Combined, TokenType.Simple> getTokenProxy() {
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (!(authentication instanceof HodAuthentication)) {

@@ -8,7 +8,9 @@ package com.hp.autonomy.hod.sso;
 import com.google.common.collect.ImmutableSet;
 import com.hp.autonomy.hod.client.api.authentication.AuthenticationService;
 import com.hp.autonomy.hod.client.api.authentication.AuthenticationToken;
-import com.hp.autonomy.hod.client.api.authentication.CombinedTokenDetails;
+import com.hp.autonomy.hod.client.api.authentication.EntityType;
+import com.hp.autonomy.hod.client.api.authentication.TokenType;
+import com.hp.autonomy.hod.client.api.authentication.tokeninformation.CombinedTokenInformation;
 import com.hp.autonomy.hod.client.api.resource.ResourceIdentifier;
 import com.hp.autonomy.hod.client.error.HodErrorCode;
 import com.hp.autonomy.hod.client.error.HodErrorException;
@@ -24,6 +26,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.UUID;
 
 /**
  * AuthenticationProvider which consumes {@link HodTokenAuthentication} and produces {@link HodAuthentication}
@@ -32,17 +35,25 @@ public class HodAuthenticationProvider implements AuthenticationProvider {
     private final String role;
     private final TokenRepository tokenRepository;
     private final AuthenticationService authenticationService;
+    private final UUID unboundAuthenticationUuid;
 
     /**
      * Creates a new HodAuthenticationProvider
      * @param tokenRepository The token repository in which to store the HP Haven OnDemand Token
      * @param role The role to assign to users authenticated with HP Haven OnDemand SSO
      * @param authenticationService The authentication service that will perform the authentication
+     * @param unboundTokenService The unbound token service to get the unbound authentication UUID from
      */
-    public HodAuthenticationProvider(final TokenRepository tokenRepository, final String role, final AuthenticationService authenticationService) {
+    public HodAuthenticationProvider(
+        final TokenRepository tokenRepository,
+        final String role,
+        final AuthenticationService authenticationService,
+        final UnboundTokenService<TokenType.HmacSha1> unboundTokenService
+    ) {
         this.role = role;
         this.tokenRepository = tokenRepository;
         this.authenticationService = authenticationService;
+        unboundAuthenticationUuid = unboundTokenService.getAuthenticationUuid();
     }
 
     /**
@@ -53,22 +64,25 @@ public class HodAuthenticationProvider implements AuthenticationProvider {
      */
     @Override
     public Authentication authenticate(final Authentication authentication) throws AuthenticationException {
-        final AuthenticationToken combinedToken = ((HodTokenAuthentication) authentication).getCredentials();
-        final CombinedTokenDetails combinedTokenDetails;
+        final AuthenticationToken<EntityType.Combined, TokenType.Simple> combinedToken = ((HodTokenAuthentication) authentication).getCredentials();
+        final CombinedTokenInformation combinedTokenInformation;
 
         try {
-            combinedTokenDetails = authenticationService.getCombinedTokenDetails(combinedToken);
+            combinedTokenInformation = authenticationService.getCombinedTokenInformation(combinedToken);
         } catch (final HodErrorException e) {
-            if (HodErrorCode.INVALID_TOKEN.equals(e.getErrorCode())) {
-                throw new BadCredentialsException("Invalid token", e);
+            if (HodErrorCode.AUTHENTICATION_FAILED.equals(e.getErrorCode())) {
+                throw new BadCredentialsException("HOD authentication failed", e);
             } else {
                 throw new AuthenticationServiceException("HOD returned an error while authenticating", e);
             }
         }
 
-        // TODO: Verify the combined token once IOD-6246 is complete (CCUK-3314)
+        if (!unboundAuthenticationUuid.equals(combinedTokenInformation.getApplication().getAuthentication().getUuid())) {
+            // The provided combined token was not generated with our unbound token
+            throw new BadCredentialsException("Invalid combined token");
+        }
 
-        final TokenProxy combinedTokenProxy;
+        final TokenProxy<EntityType.Combined, TokenType.Simple> combinedTokenProxy;
 
         try {
             combinedTokenProxy = tokenRepository.insert(combinedToken);
@@ -76,20 +90,20 @@ public class HodAuthenticationProvider implements AuthenticationProvider {
             throw new AuthenticationServiceException("An error occurred while authenticating", e);
         }
 
-        final ResourceIdentifier applicationIdentifier = combinedTokenDetails.getApplication();
+        final ResourceIdentifier applicationIdentifier = combinedTokenInformation.getApplication().getIdentifier();
 
-        // Give user access to load the webapp (via the role) and permission to access resources associated with the HOD application
+        // Give user access to load the application (via the role) and permission to access resources associated with the HOD application
         final Collection<GrantedAuthority> grantedAuthorities = ImmutableSet.<GrantedAuthority>builder()
                 .add(new SimpleGrantedAuthority(role))
                 .add(new HodApplicationGrantedAuthority(applicationIdentifier))
                 .build();
 
         return new HodAuthentication(
-                combinedTokenProxy,
-                grantedAuthorities,
-                combinedTokenDetails.getUser().getName(),
-                applicationIdentifier.getDomain(),
-                applicationIdentifier.getName()
+            combinedTokenProxy,
+            grantedAuthorities,
+            combinedTokenInformation.getUser().getName(),
+            applicationIdentifier.getDomain(),
+            applicationIdentifier.getName()
         );
     }
 

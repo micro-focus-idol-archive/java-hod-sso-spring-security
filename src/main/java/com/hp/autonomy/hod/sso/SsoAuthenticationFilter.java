@@ -6,6 +6,9 @@
 package com.hp.autonomy.hod.sso;
 
 import com.hp.autonomy.hod.client.api.authentication.AuthenticationToken;
+import com.hp.autonomy.hod.client.api.authentication.EntityType;
+import com.hp.autonomy.hod.client.api.authentication.TokenType;
+import org.joda.time.DateTime;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -24,22 +27,24 @@ public class SsoAuthenticationFilter extends AbstractAuthenticationProcessingFil
 
     @Override
     public Authentication attemptAuthentication(final HttpServletRequest request, final HttpServletResponse response) throws AuthenticationException, IOException, ServletException {
-        final long expiry;
-        final long startRefresh;
+        final DateTime expiry;
+        final DateTime startRefresh;
 
         try {
-            expiry = Long.parseLong(request.getParameter("expiry"));
-            startRefresh = Long.parseLong(request.getParameter("startRefresh"));
+            expiry = new DateTime(Long.parseLong(request.getParameter("expiry")));
+            startRefresh = new DateTime(Long.parseLong(request.getParameter("startRefresh")));
         } catch (final NumberFormatException e) {
             throw new BadCredentialsException("Invalid user unbound token");
         }
 
-        final AuthenticationToken token = new AuthenticationToken(
-                expiry,
-                request.getParameter("id"),
-                request.getParameter("secret"),
-                request.getParameter("type"),
-                startRefresh
+        final AuthenticationToken<EntityType.Combined, TokenType.Simple> token = new AuthenticationToken<>(
+            EntityType.Combined.INSTANCE,
+            TokenType.Simple.INSTANCE,
+            request.getParameter("type"),
+            expiry,
+            request.getParameter("id"),
+            request.getParameter("secret"),
+            startRefresh
         );
 
         return getAuthenticationManager().authenticate(new HodTokenAuthentication(token));

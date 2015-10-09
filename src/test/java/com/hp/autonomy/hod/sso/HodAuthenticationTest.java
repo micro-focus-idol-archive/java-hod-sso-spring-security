@@ -5,6 +5,8 @@
 
 package com.hp.autonomy.hod.sso;
 
+import com.hp.autonomy.hod.client.api.authentication.EntityType;
+import com.hp.autonomy.hod.client.api.authentication.TokenType;
 import com.hp.autonomy.hod.client.token.TokenProxy;
 import org.junit.Test;
 import org.springframework.security.core.GrantedAuthority;
@@ -27,7 +29,7 @@ public class HodAuthenticationTest {
         final String username = "my-username";
         final String applicationName = "my-application";
         final String domain = "my-domain";
-        final TokenProxy combinedTokenProxy = new TokenProxy();
+        final TokenProxy<EntityType.Combined, TokenType.Simple> combinedTokenProxy = new TokenProxy<>(EntityType.Combined.INSTANCE, TokenType.Simple.INSTANCE);
 
         final Collection<GrantedAuthority> authorities = Collections.emptySet();
         final HodAuthentication authentication = new HodAuthentication(combinedTokenProxy, authorities, username, domain, applicationName);

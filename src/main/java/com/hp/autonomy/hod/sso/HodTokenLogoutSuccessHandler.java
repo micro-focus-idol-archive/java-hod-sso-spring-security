@@ -6,6 +6,8 @@
 package com.hp.autonomy.hod.sso;
 
 import com.hp.autonomy.hod.client.api.authentication.AuthenticationToken;
+import com.hp.autonomy.hod.client.api.authentication.EntityType;
+import com.hp.autonomy.hod.client.api.authentication.TokenType;
 import com.hp.autonomy.hod.client.token.TokenRepository;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.DefaultRedirectStrategy;
@@ -45,7 +47,7 @@ public class HodTokenLogoutSuccessHandler implements LogoutSuccessHandler {
     @Override
     public void onLogoutSuccess(final HttpServletRequest request, final HttpServletResponse response, final Authentication authentication) throws IOException, ServletException {
         final HodAuthentication hodAuthentication = (HodAuthentication) authentication;
-        final AuthenticationToken combinedToken = tokenRepository.get(hodAuthentication.getTokenProxy());
+        final AuthenticationToken<EntityType.Combined, TokenType.Simple> combinedToken = tokenRepository.get(hodAuthentication.getTokenProxy());
         redirectStrategy.sendRedirect(request, response, redirectPath + "?token=" + uriEncode(combinedToken.toString()));
     }
 
