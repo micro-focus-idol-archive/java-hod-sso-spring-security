@@ -8,12 +8,14 @@ package com.hp.autonomy.hod.sso;
 import com.hp.autonomy.hod.client.api.authentication.AuthenticationToken;
 import com.hp.autonomy.hod.client.api.authentication.EntityType;
 import com.hp.autonomy.hod.client.api.authentication.TokenType;
+import com.hp.autonomy.hod.client.api.resource.ResourceIdentifier;
 import com.hp.autonomy.hod.client.token.TokenProxy;
 import lombok.EqualsAndHashCode;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 
 import java.util.Collection;
+import java.util.UUID;
 
 /**
  * Spring Security Authentication which combines an HP Haven OnDemand {@link TokenProxy} with a username and application
@@ -23,32 +25,37 @@ import java.util.Collection;
  */
 @EqualsAndHashCode(callSuper = true)
 public class HodAuthentication extends AbstractAuthenticationToken {
-    private static final long serialVersionUID = -4998948982652372121L;
+    private static final long serialVersionUID = -8505398304901010960L;
 
     private final TokenProxy<EntityType.Combined, TokenType.Simple> combinedTokenProxy;
     private final String username;
-    private final String domain;
-    private final String application;
+    private final ResourceIdentifier application;
+    private final ResourceIdentifier userStore;
+    private final UUID tenantUuid;
 
     /**
      * Creates a new HodAuthentication
      * @param combinedTokenProxy The TokenProxy associated with the session
      * @param authorities The GrantedAuthorities associated with the session
      * @param username The HP Haven OnDemand username associated with the session
-     * @param domain The HP Haven OnDemand domain associated with the session
-     * @param application The HP Haven OnDemand application associated with the session
+     * @param application The application associated with the session
+     * @param userStore The user store associated with the session
+     * @param tenantUuid The UUID of the tenant associated with the session
      */
     public HodAuthentication(
-            final TokenProxy<EntityType.Combined, TokenType.Simple> combinedTokenProxy,
-            final Collection<? extends GrantedAuthority> authorities,
-            final String username,
-            final String domain,
-            final String application
+        final TokenProxy<EntityType.Combined, TokenType.Simple> combinedTokenProxy,
+        final Collection<? extends GrantedAuthority> authorities,
+        final String username,
+        final ResourceIdentifier application,
+        final ResourceIdentifier userStore,
+        final UUID tenantUuid
     ) {
         super(authorities);
         super.setAuthenticated(true);
-        this.domain = domain;
+
         this.application = application;
+        this.userStore = userStore;
+        this.tenantUuid = tenantUuid;
         this.username = username;
         this.combinedTokenProxy = combinedTokenProxy;
     }
@@ -73,15 +80,22 @@ public class HodAuthentication extends AbstractAuthenticationToken {
     /**
      * @return The HP Haven OnDemand application associated with the session
      */
-    public String getApplication() {
+    public ResourceIdentifier getApplication() {
         return application;
     }
 
     /**
-     * @return The HP Haven OnDemand domain associated with the session
+     * @return The HP Haven OnDemand user store associated with the session
      */
-    public String getDomain() {
-        return domain;
+    public ResourceIdentifier getUserStore() {
+        return userStore;
+    }
+
+    /**
+     * @return The UUID of the tenant associated with the session
+     */
+    public UUID getTenantUuid() {
+        return tenantUuid;
     }
 
     /**

@@ -102,8 +102,9 @@ public class HodAuthenticationProvider implements AuthenticationProvider {
             combinedTokenProxy,
             grantedAuthorities,
             combinedTokenInformation.getUser().getName(),
-            applicationIdentifier.getDomain(),
-            applicationIdentifier.getName()
+            combinedTokenInformation.getApplication().getIdentifier(),
+            combinedTokenInformation.getUserStore().getIdentifier(),
+            combinedTokenInformation.getTenantUuid()
         );
     }
 
