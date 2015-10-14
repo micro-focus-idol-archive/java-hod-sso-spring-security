@@ -46,9 +46,14 @@ public class HodTokenLogoutSuccessHandler implements LogoutSuccessHandler {
 
     @Override
     public void onLogoutSuccess(final HttpServletRequest request, final HttpServletResponse response, final Authentication authentication) throws IOException, ServletException {
-        final HodAuthentication hodAuthentication = (HodAuthentication) authentication;
-        final AuthenticationToken<EntityType.Combined, TokenType.Simple> combinedToken = tokenRepository.get(hodAuthentication.getTokenProxy());
-        redirectStrategy.sendRedirect(request, response, redirectPath + "?token=" + uriEncode(combinedToken.toString()));
+        String redirectUrl = redirectPath;
+
+        if (authentication instanceof HodAuthentication) {
+            final AuthenticationToken<EntityType.Combined, TokenType.Simple> combinedToken = tokenRepository.get(((HodAuthentication) authentication).getTokenProxy());
+            redirectUrl += "?token=" + uriEncode(combinedToken.toString());
+        }
+
+        redirectStrategy.sendRedirect(request, response, redirectUrl);
     }
 
     private String uriEncode(final String input) {
