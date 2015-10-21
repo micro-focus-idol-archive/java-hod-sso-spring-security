@@ -101,7 +101,10 @@ public class HodAuthenticationProvider implements AuthenticationProvider {
         return new HodAuthentication(
             combinedTokenProxy,
             grantedAuthorities,
-            combinedTokenInformation.getUser().getName(),
+
+            // TODO: Get the principal from the user metadata
+            "PLACEHOLDER_USERNAME",
+
             combinedTokenInformation.getApplication().getIdentifier(),
             combinedTokenInformation.getUserStore().getIdentifier(),
             combinedTokenInformation.getTenantUuid()
