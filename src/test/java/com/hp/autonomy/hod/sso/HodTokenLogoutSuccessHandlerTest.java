@@ -1,8 +1,11 @@
 package com.hp.autonomy.hod.sso;
 
 import com.hp.autonomy.hod.client.api.authentication.AuthenticationToken;
+import com.hp.autonomy.hod.client.api.authentication.AuthenticationType;
 import com.hp.autonomy.hod.client.api.authentication.EntityType;
 import com.hp.autonomy.hod.client.api.authentication.TokenType;
+import com.hp.autonomy.hod.client.api.authentication.tokeninformation.AuthenticationInformation;
+import com.hp.autonomy.hod.client.api.authentication.tokeninformation.UserStoreInformation;
 import com.hp.autonomy.hod.client.api.resource.ResourceIdentifier;
 import com.hp.autonomy.hod.client.token.TokenProxy;
 import com.hp.autonomy.hod.client.token.TokenRepository;
@@ -74,13 +77,20 @@ public class HodTokenLogoutSuccessHandlerTest {
         final String expectedPath = CONTEXT_PATH + REDIRECT_PATH + "?token=CMB%3ASIMPLE%3Atoken-id%3Atoken-secret";
         when(response.encodeRedirectURL(expectedPath)).thenReturn(mockRedirectUrl);
 
+        final HodAuthenticationPrincipal principal = new HodAuthenticationPrincipal(
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                new ResourceIdentifier("APP-DOMAIN", "APP-NAME"),
+                new UserStoreInformation(UUID.randomUUID(), "STORE-DOMAIN", "STORE-NAME"),
+                new AuthenticationInformation(UUID.randomUUID(), AuthenticationType.LEGACY_API_KEY),
+                new AuthenticationInformation(UUID.randomUUID(), AuthenticationType.LEGACY_API_KEY),
+                null
+        );
+
         final HodAuthentication authentication = new HodAuthentication(
                 tokenProxy,
                 Collections.<GrantedAuthority>emptySet(),
-                "username",
-                new ResourceIdentifier("APP-DOMAIN", "APP-NAME"),
-                new ResourceIdentifier("APP-DOMAIN", "APP_NAME"),
-                UUID.randomUUID()
+                principal
         );
 
         logoutSuccessHandler.onLogoutSuccess(request, response, authentication);

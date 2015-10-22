@@ -12,6 +12,7 @@ import com.hp.autonomy.hod.client.api.authentication.EntityType;
 import com.hp.autonomy.hod.client.api.authentication.TokenType;
 import com.hp.autonomy.hod.client.api.authentication.tokeninformation.CombinedTokenInformation;
 import com.hp.autonomy.hod.client.api.resource.ResourceIdentifier;
+import com.hp.autonomy.hod.client.api.userstore.user.UserStoreUsersService;
 import com.hp.autonomy.hod.client.error.HodErrorCode;
 import com.hp.autonomy.hod.client.error.HodErrorException;
 import com.hp.autonomy.hod.client.token.TokenProxy;
@@ -25,7 +26,9 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.Collection;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -35,25 +38,51 @@ public class HodAuthenticationProvider implements AuthenticationProvider {
     private final String role;
     private final TokenRepository tokenRepository;
     private final AuthenticationService authenticationService;
+    private final UserStoreUsersService userStoreUsersService;
     private final UUID unboundAuthenticationUuid;
+    private final Map<String, Class<? extends Serializable>> metadataTypes;
 
     /**
-     * Creates a new HodAuthenticationProvider
-     * @param tokenRepository The token repository in which to store the HP Haven OnDemand Token
-     * @param role The role to assign to users authenticated with HP Haven OnDemand SSO
+     * Creates a new HodAuthenticationProvider which fetches the given user metadata keys. Note: this will only work if
+     * the combined token has the privilege for the Get User Metadata API on their user store.
+     * @param tokenRepository       The token repository in which to store the HP Haven OnDemand Token
+     * @param role                  The role to assign to users authenticated with HP Haven OnDemand SSO
      * @param authenticationService The authentication service that will perform the authentication
-     * @param unboundTokenService The unbound token service to get the unbound authentication UUID from
+     * @param unboundTokenService   The unbound token service to get the unbound authentication UUID from
+     * @param userStoreUsersService The user store users service that will get user metadata
+     * @param metadataTypes         Metadata keys and types to retrieve and incorporate into the HodAuthentication principal
      */
     public HodAuthenticationProvider(
-        final TokenRepository tokenRepository,
-        final String role,
-        final AuthenticationService authenticationService,
-        final UnboundTokenService<TokenType.HmacSha1> unboundTokenService
+            final TokenRepository tokenRepository,
+            final String role,
+            final AuthenticationService authenticationService,
+            final UnboundTokenService<TokenType.HmacSha1> unboundTokenService,
+            final UserStoreUsersService userStoreUsersService,
+            final Map<String, Class<? extends Serializable>> metadataTypes
     ) {
         this.role = role;
         this.tokenRepository = tokenRepository;
         this.authenticationService = authenticationService;
+        this.userStoreUsersService = userStoreUsersService;
+        this.metadataTypes = metadataTypes;
+
         unboundAuthenticationUuid = unboundTokenService.getAuthenticationUuid();
+    }
+
+    /**
+     * Creates a new HodAuthenticationProvider which doesn't fetch user metadata.
+     * @param tokenRepository       The token repository in which to store the HP Haven OnDemand Token
+     * @param role                  The role to assign to users authenticated with HP Haven OnDemand SSO
+     * @param authenticationService The authentication service that will perform the authentication
+     * @param unboundTokenService   The unbound token service to get the unbound authentication UUID from
+     */
+    public HodAuthenticationProvider(
+            final TokenRepository tokenRepository,
+            final String role,
+            final AuthenticationService authenticationService,
+            final UnboundTokenService<TokenType.HmacSha1> unboundTokenService
+    ) {
+        this(tokenRepository, role, authenticationService, unboundTokenService, null, null);
     }
 
     /**
@@ -90,6 +119,24 @@ public class HodAuthenticationProvider implements AuthenticationProvider {
             throw new AuthenticationServiceException("An error occurred while authenticating", e);
         }
 
+        final Map<String, Serializable> metadata;
+
+        if (metadataTypes == null) {
+            metadata = null;
+        } else {
+            try {
+                metadata = userStoreUsersService.getUserMetadata(
+                        combinedTokenProxy,
+                        combinedTokenInformation.getUserStore().getIdentifier(),
+                        combinedTokenInformation.getUser().getUuid(),
+                        metadataTypes
+                );
+            } catch (final HodErrorException e) {
+                throw new AuthenticationServiceException("HOD returned an error while authenticating", e);
+            }
+        }
+
+        final HodAuthenticationPrincipal principal = new HodAuthenticationPrincipal(combinedTokenInformation, metadata);
         final ResourceIdentifier applicationIdentifier = combinedTokenInformation.getApplication().getIdentifier();
 
         // Give user access to load the application (via the role) and permission to access resources associated with the HOD application
@@ -99,15 +146,9 @@ public class HodAuthenticationProvider implements AuthenticationProvider {
                 .build();
 
         return new HodAuthentication(
-            combinedTokenProxy,
-            grantedAuthorities,
-
-            // TODO: Get the principal from the user metadata
-            "PLACEHOLDER_USERNAME",
-
-            combinedTokenInformation.getApplication().getIdentifier(),
-            combinedTokenInformation.getUserStore().getIdentifier(),
-            combinedTokenInformation.getTenantUuid()
+                combinedTokenProxy,
+                grantedAuthorities,
+                principal
         );
     }
 

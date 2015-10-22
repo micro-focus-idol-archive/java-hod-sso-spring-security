@@ -35,7 +35,7 @@ public class HodTokenAuthentication extends AbstractAuthenticationToken {
     }
 
     /**
-     * This method returns null as the username has not been obtained yet
+     * This method returns null as the user details have not been obtained yet
      * @return null
      */
     @Override
