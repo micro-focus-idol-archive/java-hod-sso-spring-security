@@ -38,6 +38,7 @@ import static org.junit.Assert.assertThat;
 public class HodAuthenticationTest {
     private static final UUID TENANT_UUID = UUID.fromString("852bbbc1-91cd-429b-8e4e-ff29a31678e5");
     private static final UUID USER_UUID = UUID.fromString("847e1504-5c4d-4c59-87e8-87634f3f3b17");
+    private static final String NAME = "fred";
     private static final ResourceIdentifier APPLICATION = new ResourceIdentifier("app-domain", "app-name");
 
     private static final AuthenticationInformation APP_AUTHENTICATION = new AuthenticationInformation(
@@ -68,6 +69,7 @@ public class HodAuthenticationTest {
             USER_STORE,
             APP_AUTHENTICATION,
             USER_AUTHENTICATION,
+            NAME,
             METADATA
     );
 
@@ -101,6 +103,7 @@ public class HodAuthenticationTest {
         assertThat(principal.getApplicationAuthentication(), is(APP_AUTHENTICATION));
         assertThat(principal.getUserAuthentication(), is(USER_AUTHENTICATION));
         assertThat(principal.getUserMetadata(), is(METADATA));
+        assertThat(principal.getName(), is(NAME));
     }
 
     private <T extends Serializable> T deserializeFromResource(final String resourcePath) throws IOException, ClassNotFoundException {

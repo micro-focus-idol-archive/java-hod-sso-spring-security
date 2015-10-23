@@ -11,6 +11,7 @@ import com.hp.autonomy.hod.client.api.authentication.tokeninformation.UserStoreI
 import com.hp.autonomy.hod.client.api.resource.ResourceIdentifier;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import org.apache.commons.lang.builder.ToStringBuilder;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -32,6 +33,7 @@ public class HodAuthenticationPrincipal implements Principal, Serializable {
     private final UserStoreInformation userStoreInformation;
     private final AuthenticationInformation applicationAuthentication;
     private final AuthenticationInformation userAuthentication;
+    private final String name;
     private transient Map<String, Serializable> userMetadata;
 
     public HodAuthenticationPrincipal(
@@ -41,6 +43,7 @@ public class HodAuthenticationPrincipal implements Principal, Serializable {
             final UserStoreInformation userStoreInformation,
             final AuthenticationInformation applicationAuthentication,
             final AuthenticationInformation userAuthentication,
+            final String name,
             final Map<String, Serializable> userMetadata
     ) {
         this.tenantUuid = tenantUuid;
@@ -49,10 +52,12 @@ public class HodAuthenticationPrincipal implements Principal, Serializable {
         this.userStoreInformation = userStoreInformation;
         this.applicationAuthentication = applicationAuthentication;
         this.userAuthentication = userAuthentication;
+        this.name = name;
         this.userMetadata = userMetadata;
     }
 
-    public HodAuthenticationPrincipal(final CombinedTokenInformation tokenInformation, final Map<String, Serializable> userMetadata) {
+    public HodAuthenticationPrincipal(final CombinedTokenInformation tokenInformation, final String name, final Map<String, Serializable> userMetadata) {
+        this.name = name;
         this.userMetadata = userMetadata;
         tenantUuid = tokenInformation.getTenantUuid();
         userUuid = tokenInformation.getUser().getUuid();
@@ -64,12 +69,16 @@ public class HodAuthenticationPrincipal implements Principal, Serializable {
 
     @Override
     public String getName() {
-        return toString();
+        return name != null ? name : userUuid.toString();
     }
 
     @Override
     public String toString() {
-        return "{tenantUuid: " + tenantUuid + ", userStore: " + userStoreInformation.getIdentifier() + ", userUuid: " + userUuid + "}";
+        return new ToStringBuilder(this)
+                .append("tenantUuid", tenantUuid)
+                .append("userStore", userStoreInformation.getIdentifier())
+                .append("userUuid", userUuid)
+                .toString();
     }
 
     private void writeObject(final ObjectOutputStream out) throws IOException {

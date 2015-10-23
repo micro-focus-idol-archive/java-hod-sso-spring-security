@@ -84,6 +84,7 @@ public class HodTokenLogoutSuccessHandlerTest {
                 new UserStoreInformation(UUID.randomUUID(), "STORE-DOMAIN", "STORE-NAME"),
                 new AuthenticationInformation(UUID.randomUUID(), AuthenticationType.LEGACY_API_KEY),
                 new AuthenticationInformation(UUID.randomUUID(), AuthenticationType.LEGACY_API_KEY),
+                null,
                 null
         );
 

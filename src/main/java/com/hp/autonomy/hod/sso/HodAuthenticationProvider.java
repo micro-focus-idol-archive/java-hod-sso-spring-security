@@ -41,6 +41,38 @@ public class HodAuthenticationProvider implements AuthenticationProvider {
     private final UserStoreUsersService userStoreUsersService;
     private final UUID unboundAuthenticationUuid;
     private final Map<String, Class<? extends Serializable>> metadataTypes;
+    private final HodUsernameResolver hodUsernameResolver;
+
+    /**
+     * Creates a new HodAuthenticationProvider which fetches the given user metadata keys. Note: this will only work if
+     * the combined token has the privilege for the Get User Metadata API on their user store. Uses the given username
+     * resolver to set the name for a user's {@link HodAuthenticationPrincipal}.
+     * @param tokenRepository       The token repository in which to store the HP Haven OnDemand Token
+     * @param role                  The role to assign to users authenticated with HP Haven OnDemand SSO
+     * @param authenticationService The authentication service that will perform the authentication
+     * @param unboundTokenService   The unbound token service to get the unbound authentication UUID from
+     * @param userStoreUsersService The user store users service that will get user metadata
+     * @param metadataTypes         Metadata keys and types to retrieve and incorporate into the HodAuthentication principal
+     * @param hodUsernameResolver      The strategy to extract usernames from users' metadata
+     */
+    public HodAuthenticationProvider(
+            final TokenRepository tokenRepository,
+            final String role,
+            final AuthenticationService authenticationService,
+            final UnboundTokenService<TokenType.HmacSha1> unboundTokenService,
+            final UserStoreUsersService userStoreUsersService,
+            final Map<String, Class<? extends Serializable>> metadataTypes,
+            final HodUsernameResolver hodUsernameResolver
+    ) {
+        this.role = role;
+        this.tokenRepository = tokenRepository;
+        this.authenticationService = authenticationService;
+        this.userStoreUsersService = userStoreUsersService;
+        this.metadataTypes = metadataTypes;
+        this.hodUsernameResolver = hodUsernameResolver;
+
+        unboundAuthenticationUuid = unboundTokenService.getAuthenticationUuid();
+    }
 
     /**
      * Creates a new HodAuthenticationProvider which fetches the given user metadata keys. Note: this will only work if
@@ -60,13 +92,7 @@ public class HodAuthenticationProvider implements AuthenticationProvider {
             final UserStoreUsersService userStoreUsersService,
             final Map<String, Class<? extends Serializable>> metadataTypes
     ) {
-        this.role = role;
-        this.tokenRepository = tokenRepository;
-        this.authenticationService = authenticationService;
-        this.userStoreUsersService = userStoreUsersService;
-        this.metadataTypes = metadataTypes;
-
-        unboundAuthenticationUuid = unboundTokenService.getAuthenticationUuid();
+        this(tokenRepository, role, authenticationService, unboundTokenService, userStoreUsersService, metadataTypes, null);
     }
 
     /**
@@ -82,7 +108,7 @@ public class HodAuthenticationProvider implements AuthenticationProvider {
             final AuthenticationService authenticationService,
             final UnboundTokenService<TokenType.HmacSha1> unboundTokenService
     ) {
-        this(tokenRepository, role, authenticationService, unboundTokenService, null, null);
+        this(tokenRepository, role, authenticationService, unboundTokenService, null, null, null);
     }
 
     /**
@@ -120,6 +146,7 @@ public class HodAuthenticationProvider implements AuthenticationProvider {
         }
 
         final Map<String, Serializable> metadata;
+        String name = null;
 
         if (metadataTypes == null) {
             metadata = null;
@@ -131,12 +158,16 @@ public class HodAuthenticationProvider implements AuthenticationProvider {
                         combinedTokenInformation.getUser().getUuid(),
                         metadataTypes
                 );
+
+                if (hodUsernameResolver != null) {
+                    name = hodUsernameResolver.resolve(metadata);
+                }
             } catch (final HodErrorException e) {
                 throw new AuthenticationServiceException("HOD returned an error while authenticating", e);
             }
         }
 
-        final HodAuthenticationPrincipal principal = new HodAuthenticationPrincipal(combinedTokenInformation, metadata);
+        final HodAuthenticationPrincipal principal = new HodAuthenticationPrincipal(combinedTokenInformation, name, metadata);
         final ResourceIdentifier applicationIdentifier = combinedTokenInformation.getApplication().getIdentifier();
 
         // Give user access to load the application (via the role) and permission to access resources associated with the HOD application
