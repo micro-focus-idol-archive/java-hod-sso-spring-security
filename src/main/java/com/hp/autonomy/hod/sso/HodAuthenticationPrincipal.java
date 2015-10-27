@@ -53,18 +53,21 @@ public class HodAuthenticationPrincipal implements Principal, Serializable {
         this.applicationAuthentication = applicationAuthentication;
         this.userAuthentication = userAuthentication;
         this.name = name;
-        this.userMetadata = userMetadata;
+
+        this.userMetadata = userMetadata == null ? new HashMap<String, Serializable>() : userMetadata;
     }
 
     public HodAuthenticationPrincipal(final CombinedTokenInformation tokenInformation, final String name, final Map<String, Serializable> userMetadata) {
-        this.name = name;
-        this.userMetadata = userMetadata;
-        tenantUuid = tokenInformation.getTenantUuid();
-        userUuid = tokenInformation.getUser().getUuid();
-        application = tokenInformation.getApplication().getIdentifier();
-        userStoreInformation = tokenInformation.getUserStore();
-        applicationAuthentication = tokenInformation.getApplication().getAuthentication();
-        userAuthentication = tokenInformation.getUser().getAuthentication();
+        this(
+                tokenInformation.getTenantUuid(),
+                tokenInformation.getUser().getUuid(),
+                tokenInformation.getApplication().getIdentifier(),
+                tokenInformation.getUserStore(),
+                tokenInformation.getApplication().getAuthentication(),
+                tokenInformation.getUser().getAuthentication(),
+                name,
+                userMetadata
+        );
     }
 
     @Override

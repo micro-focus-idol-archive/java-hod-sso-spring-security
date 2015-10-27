@@ -28,6 +28,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -145,12 +146,10 @@ public class HodAuthenticationProvider implements AuthenticationProvider {
             throw new AuthenticationServiceException("An error occurred while authenticating", e);
         }
 
-        final Map<String, Serializable> metadata;
+        Map<String, Serializable> metadata = new HashMap<>();
         String name = null;
 
-        if (metadataTypes == null) {
-            metadata = null;
-        } else {
+        if (metadataTypes != null) {
             try {
                 metadata = userStoreUsersService.getUserMetadata(
                         combinedTokenProxy,
