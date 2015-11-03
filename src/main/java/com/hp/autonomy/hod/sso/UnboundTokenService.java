@@ -27,6 +27,6 @@ public interface UnboundTokenService<T extends TokenType> {
     /**
      * @return The UUID of the authentication used to generate unbound tokens
      */
-    UUID getAuthenticationUuid();
+    UUID getAuthenticationUuid() throws HodErrorException;
 
 }

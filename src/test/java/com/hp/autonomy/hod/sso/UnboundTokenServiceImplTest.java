@@ -41,16 +41,15 @@ import java.util.concurrent.TimeUnit;
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 public class UnboundTokenServiceImplTest {
     private static final String API_KEY = "123-api-key";
     private static final UUID AUTH_UUID = UUID.randomUUID();
+    private static final long TIME_OUT_SECONDS = 3;
 
     private ExecutorService executorService;
 
@@ -71,13 +70,6 @@ public class UnboundTokenServiceImplTest {
         when(configService.getConfig()).thenReturn(config);
 
         authenticationService = mock(AuthenticationService.class);
-
-        final AuthenticationToken<EntityType.Unbound, TokenType.HmacSha1> initialToken = createToken(Seconds.ZERO);
-        mockAuthenticateUnbound().thenReturn(initialToken);
-
-        final UnboundTokenInformation tokenInformation = new UnboundTokenInformation(new AuthenticationInformation(AUTH_UUID, AuthenticationType.LEGACY_API_KEY));
-        when(authenticationService.getHmacUnboundTokenInformation(initialToken)).thenReturn(tokenInformation);
-
         unboundTokenService = new UnboundTokenServiceImpl(authenticationService, configService);
     }
 
@@ -87,7 +79,11 @@ public class UnboundTokenServiceImplTest {
     }
 
     @Test
-    public void getsAuthenticationUUID() {
+    public void getsAuthenticationUUID() throws HodErrorException {
+        final AuthenticationToken<EntityType.Unbound, TokenType.HmacSha1> token = createToken(Hours.ONE);
+        mockAuthenticateUnbound().thenReturn(token);
+        mockTokenInformation(token);
+
         assertThat(unboundTokenService.getAuthenticationUuid(), is(AUTH_UUID));
     }
 
@@ -98,12 +94,13 @@ public class UnboundTokenServiceImplTest {
 
         final AuthenticationToken<EntityType.Unbound, TokenType.HmacSha1> unboundToken = createToken(Hours.ONE);
         mockAuthenticateUnbound().then(new DelayedAnswer<>(unboundToken));
+        mockTokenInformation(unboundToken);
 
         executorService.execute(new UnboundTokenGetter(unboundTokenService, outputs, latch));
-        latch.await();
+        awaitLatch(latch);
 
         assertThat(outputs, hasSize(1));
-        verify(authenticationService, times(2)).authenticateUnbound(any(ApiKey.class), eq(TokenType.HmacSha1.INSTANCE));
+        verify(authenticationService, times(1)).authenticateUnbound(any(ApiKey.class), eq(TokenType.HmacSha1.INSTANCE));
         checkOutput(outputs.get(0), unboundToken, null);
     }
 
@@ -115,15 +112,16 @@ public class UnboundTokenServiceImplTest {
 
         final AuthenticationToken<EntityType.Unbound, TokenType.HmacSha1> unboundToken = createToken(Hours.ONE);
         mockAuthenticateUnbound().then(new DelayedAnswer<>(unboundToken));
+        mockTokenInformation(unboundToken);
 
         for (int i = 0; i < times; i++) {
             executorService.execute(new UnboundTokenGetter(unboundTokenService, outputs, latch));
         }
 
-        latch.await();
+        awaitLatch(latch);
 
         assertThat(outputs, hasSize(times));
-        verify(authenticationService, times(2)).authenticateUnbound(any(ApiKey.class), eq(TokenType.HmacSha1.INSTANCE));
+        verify(authenticationService, times(1)).authenticateUnbound(any(ApiKey.class), eq(TokenType.HmacSha1.INSTANCE));
 
         for (int i = 0; i < times; i++) {
             checkOutput(outputs.get(i), unboundToken, null);
@@ -138,15 +136,16 @@ public class UnboundTokenServiceImplTest {
         final AuthenticationToken<EntityType.Unbound, TokenType.HmacSha1> unboundToken = createToken(Hours.ONE);
         final HodErrorException exception = createException();
         mockAuthenticateUnbound().then(new DelayedAnswer<>(exception)).then(new DelayedAnswer<>(unboundToken));
+        mockTokenInformation(unboundToken);
 
         for (int i = 0; i < 3; i++) {
             executorService.execute(new UnboundTokenGetter(unboundTokenService, outputs, latch));
         }
 
-        latch.await();
+        awaitLatch(latch);
 
         assertThat(outputs, hasSize(3));
-        verify(authenticationService, times(3)).authenticateUnbound(any(ApiKey.class), eq(TokenType.HmacSha1.INSTANCE));
+        verify(authenticationService, times(2)).authenticateUnbound(any(ApiKey.class), eq(TokenType.HmacSha1.INSTANCE));
 
         checkOutput(outputs.get(0), null, exception);
         checkOutput(outputs.get(1), unboundToken, null);
@@ -161,23 +160,29 @@ public class UnboundTokenServiceImplTest {
         final AuthenticationToken<EntityType.Unbound, TokenType.HmacSha1> expiredUnboundToken = createToken(new Period(UnboundTokenServiceImpl.EXPIRY_TOLERANCE).plus(Seconds.ONE));
         final AuthenticationToken<EntityType.Unbound, TokenType.HmacSha1> newToken = createToken(Days.ONE);
         mockAuthenticateUnbound().then(new DelayedAnswer<>(expiredUnboundToken)).then(new DelayedAnswer<>(newToken));
+        mockTokenInformation(expiredUnboundToken);
 
         final CountDownLatch latch1 = new CountDownLatch(1);
         executorService.execute(new UnboundTokenGetter(unboundTokenService, outputs, latch1));
-        latch1.await();
+        awaitLatch(latch1);
 
         // Wait for the first token to be expired
         TimeUnit.SECONDS.sleep(2);
 
         final CountDownLatch latch2 = new CountDownLatch(1);
         executorService.execute(new UnboundTokenGetter(unboundTokenService, outputs, latch2));
-        latch2.await();
+        awaitLatch(latch2);
 
         assertThat(outputs, hasSize(2));
-        verify(authenticationService, times(3)).authenticateUnbound(any(ApiKey.class), eq(TokenType.HmacSha1.INSTANCE));
+        verify(authenticationService, times(2)).authenticateUnbound(any(ApiKey.class), eq(TokenType.HmacSha1.INSTANCE));
 
         checkOutput(outputs.get(0), expiredUnboundToken, null);
         checkOutput(outputs.get(1), newToken, null);
+    }
+
+    private void awaitLatch(final CountDownLatch latch) throws InterruptedException {
+        final boolean completed = latch.await(TIME_OUT_SECONDS, TimeUnit.SECONDS);
+        assertTrue("Latch was not counted down", completed);
     }
 
     private OngoingStubbing<AuthenticationToken<EntityType.Unbound, TokenType.HmacSha1>> mockAuthenticateUnbound() throws HodErrorException {
@@ -197,6 +202,11 @@ public class UnboundTokenServiceImplTest {
     private HodErrorException createException() {
         final HodError hodError = new HodError.Builder().build();
         return new HodErrorException(hodError, 500);
+    }
+
+    private void mockTokenInformation(AuthenticationToken<EntityType.Unbound, TokenType.HmacSha1> token) throws HodErrorException {
+        final UnboundTokenInformation tokenInformation = new UnboundTokenInformation(new AuthenticationInformation(AUTH_UUID, AuthenticationType.LEGACY_API_KEY));
+        when(authenticationService.getHmacUnboundTokenInformation(token)).thenReturn(tokenInformation);
     }
 
     private static class UnboundTokenOutput {
