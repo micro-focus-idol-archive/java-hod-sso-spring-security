@@ -64,7 +64,7 @@ public class HodAuthenticationProvider implements AuthenticationProvider {
             final UserStoreUsersService userStoreUsersService,
             final Map<String, Class<? extends Serializable>> metadataTypes,
             final HodUsernameResolver hodUsernameResolver
-    ) {
+    ) throws HodErrorException {
         this.role = role;
         this.tokenRepository = tokenRepository;
         this.authenticationService = authenticationService;
@@ -92,7 +92,7 @@ public class HodAuthenticationProvider implements AuthenticationProvider {
             final UnboundTokenService<TokenType.HmacSha1> unboundTokenService,
             final UserStoreUsersService userStoreUsersService,
             final Map<String, Class<? extends Serializable>> metadataTypes
-    ) {
+    ) throws HodErrorException {
         this(tokenRepository, role, authenticationService, unboundTokenService, userStoreUsersService, metadataTypes, null);
     }
 
@@ -108,7 +108,7 @@ public class HodAuthenticationProvider implements AuthenticationProvider {
             final String role,
             final AuthenticationService authenticationService,
             final UnboundTokenService<TokenType.HmacSha1> unboundTokenService
-    ) {
+    ) throws HodErrorException {
         this(tokenRepository, role, authenticationService, unboundTokenService, null, null, null);
     }
 
