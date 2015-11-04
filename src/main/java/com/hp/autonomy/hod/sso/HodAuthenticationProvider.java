@@ -31,6 +31,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * AuthenticationProvider which consumes {@link HodTokenAuthentication} and produces {@link HodAuthentication}
@@ -40,9 +41,10 @@ public class HodAuthenticationProvider implements AuthenticationProvider {
     private final TokenRepository tokenRepository;
     private final AuthenticationService authenticationService;
     private final UserStoreUsersService userStoreUsersService;
-    private final UUID unboundAuthenticationUuid;
+    private final AtomicReference<UUID> unboundAuthenticationUuid = new AtomicReference<>();;
     private final Map<String, Class<? extends Serializable>> metadataTypes;
     private final HodUsernameResolver hodUsernameResolver;
+    private final UnboundTokenService<TokenType.HmacSha1> unboundTokenService;
 
     /**
      * Creates a new HodAuthenticationProvider which fetches the given user metadata keys. Note: this will only work if
@@ -71,8 +73,7 @@ public class HodAuthenticationProvider implements AuthenticationProvider {
         this.userStoreUsersService = userStoreUsersService;
         this.metadataTypes = metadataTypes;
         this.hodUsernameResolver = hodUsernameResolver;
-
-        unboundAuthenticationUuid = unboundTokenService.getAuthenticationUuid();
+        this.unboundTokenService = unboundTokenService;
     }
 
     /**
@@ -133,7 +134,15 @@ public class HodAuthenticationProvider implements AuthenticationProvider {
             }
         }
 
-        if (!unboundAuthenticationUuid.equals(combinedTokenInformation.getApplication().getAuthentication().getUuid())) {
+        if (unboundAuthenticationUuid.get() == null) {
+            try {
+                unboundAuthenticationUuid.set(unboundTokenService.getAuthenticationUuid());
+            } catch (HodErrorException e) {
+                throw new AuthenticationServiceException("HOD returned an error while authenticating", e);
+            }
+        }
+
+        if (!unboundAuthenticationUuid.get().equals(combinedTokenInformation.getApplication().getAuthentication().getUuid())) {
             // The provided combined token was not generated with our unbound token
             throw new BadCredentialsException("Invalid combined token");
         }
