@@ -6,7 +6,8 @@
 package com.hp.autonomy.hod.sso;
 
 import com.hp.autonomy.hod.client.api.authentication.AuthenticationToken;
-import com.hp.autonomy.hod.client.api.resource.ResourceIdentifier;
+import com.hp.autonomy.hod.client.api.authentication.EntityType;
+import com.hp.autonomy.hod.client.api.authentication.TokenType;
 import com.hp.autonomy.hod.client.token.TokenProxy;
 import lombok.EqualsAndHashCode;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
@@ -22,33 +23,26 @@ import java.util.Collection;
  */
 @EqualsAndHashCode(callSuper = true)
 public class HodAuthentication extends AbstractAuthenticationToken {
-    private static final long serialVersionUID = -4998948982652372121L;
+    private static final long serialVersionUID = -8505398304901010960L;
 
-    private final TokenProxy combinedTokenProxy;
-    private final String username;
-    private final String domain;
-    private final String application;
+    private final TokenProxy<EntityType.Combined, TokenType.Simple> combinedTokenProxy;
+    private final HodAuthenticationPrincipal principal;
 
     /**
-     * Creates a new HodAuthentication
+     * Creates a new HodAuthentication representing a combined token.
      * @param combinedTokenProxy The TokenProxy associated with the session
      * @param authorities The GrantedAuthorities associated with the session
-     * @param username The HP Haven OnDemand username associated with the session
-     * @param domain The HP Haven OnDemand domain associated with the session
-     * @param application The HP Haven OnDemand application associated with the session
+     * @param principal The HOD application and user authenticated by this token
      */
     public HodAuthentication(
-            final TokenProxy combinedTokenProxy,
-            final Collection<? extends GrantedAuthority> authorities,
-            final String username,
-            final String domain,
-            final String application
+        final TokenProxy<EntityType.Combined, TokenType.Simple> combinedTokenProxy,
+        final Collection<? extends GrantedAuthority> authorities,
+        final HodAuthenticationPrincipal principal
     ) {
         super(authorities);
         super.setAuthenticated(true);
-        this.domain = domain;
-        this.application = application;
-        this.username = username;
+
+        this.principal = principal;
         this.combinedTokenProxy = combinedTokenProxy;
     }
 
@@ -57,36 +51,22 @@ public class HodAuthentication extends AbstractAuthenticationToken {
      * @return null
      */
     @Override
-    public AuthenticationToken getCredentials() {
+    public AuthenticationToken<?, ?> getCredentials() {
         return null;
     }
 
     /**
-     * @return The HP Haven OnDemand username associated with the session
+     * @return The HP Haven OnDemand entities authenticated by this token
      */
     @Override
-    public String getPrincipal() {
-        return username;
-    }
-
-    /**
-     * @return The HP Haven OnDemand application associated with the session
-     */
-    public String getApplication() {
-        return application;
-    }
-
-    /**
-     * @return The HP Haven OnDemand domain associated with the session
-     */
-    public String getDomain() {
-        return domain;
+    public HodAuthenticationPrincipal getPrincipal() {
+        return principal;
     }
 
     /**
      * @return The {@link TokenProxy} associated with the session
      */
-    public TokenProxy getTokenProxy() {
+    public TokenProxy<EntityType.Combined, TokenType.Simple> getTokenProxy() {
         return combinedTokenProxy;
     }
 
