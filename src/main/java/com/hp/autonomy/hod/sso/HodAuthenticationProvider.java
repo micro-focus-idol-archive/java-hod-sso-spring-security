@@ -41,7 +41,7 @@ public class HodAuthenticationProvider implements AuthenticationProvider {
     private final TokenRepository tokenRepository;
     private final AuthenticationService authenticationService;
     private final UserStoreUsersService userStoreUsersService;
-    private final AtomicReference<UUID> unboundAuthenticationUuid = new AtomicReference<>();;
+    private final AtomicReference<UUID> unboundAuthenticationUuid = new AtomicReference<>();
     private final Map<String, Class<? extends Serializable>> metadataTypes;
     private final HodUsernameResolver hodUsernameResolver;
     private final UnboundTokenService<TokenType.HmacSha1> unboundTokenService;
@@ -137,7 +137,7 @@ public class HodAuthenticationProvider implements AuthenticationProvider {
         if (unboundAuthenticationUuid.get() == null) {
             try {
                 unboundAuthenticationUuid.set(unboundTokenService.getAuthenticationUuid());
-            } catch (HodErrorException e) {
+            } catch (final HodErrorException e) {
                 throw new AuthenticationServiceException("HOD returned an error while authenticating", e);
             }
         }

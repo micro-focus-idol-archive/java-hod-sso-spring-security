@@ -42,8 +42,6 @@ import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.*;
 
 public class UnboundTokenServiceImplTest {
@@ -228,7 +226,7 @@ public class UnboundTokenServiceImplTest {
         return new HodErrorException(hodError, 500);
     }
 
-    private void mockTokenInformation(AuthenticationToken<EntityType.Unbound, TokenType.HmacSha1> token) throws HodErrorException {
+    private void mockTokenInformation(final AuthenticationToken<EntityType.Unbound, TokenType.HmacSha1> token) throws HodErrorException {
         final UnboundTokenInformation tokenInformation = new UnboundTokenInformation(new AuthenticationInformation(AUTH_UUID, AuthenticationType.LEGACY_API_KEY));
         when(authenticationService.getHmacUnboundTokenInformation(token)).thenReturn(tokenInformation);
     }
@@ -300,7 +298,7 @@ public class UnboundTokenServiceImplTest {
         private UnboundTokenGetter(final UnboundTokenService<TokenType.HmacSha1> unboundTokenService, final List<Try<AuthenticationToken<EntityType.Unbound, TokenType.HmacSha1>>> outputs, final CountDownLatch latch) {
             super(unboundTokenService, outputs, latch, new UnboundTokenServiceAction<AuthenticationToken<EntityType.Unbound, TokenType.HmacSha1>>() {
                 @Override
-                public AuthenticationToken<EntityType.Unbound, TokenType.HmacSha1> callService(UnboundTokenService<TokenType.HmacSha1> service) throws HodErrorException {
+                public AuthenticationToken<EntityType.Unbound, TokenType.HmacSha1> callService(final UnboundTokenService<TokenType.HmacSha1> service) throws HodErrorException {
                     return service.getUnboundToken();
                 }
             });
@@ -311,7 +309,7 @@ public class UnboundTokenServiceImplTest {
         private UnboundAuthenticationUUIDGetter(final UnboundTokenService<TokenType.HmacSha1> unboundTokenService, final List<Try<UUID>> outputs, final CountDownLatch latch) {
             super(unboundTokenService, outputs, latch, new UnboundTokenServiceAction<UUID>() {
                 @Override
-                public UUID callService(UnboundTokenService<TokenType.HmacSha1> service) throws HodErrorException {
+                public UUID callService(final UnboundTokenService<TokenType.HmacSha1> service) throws HodErrorException {
                     return service.getAuthenticationUuid();
                 }
             });
