@@ -1,5 +1,5 @@
 # HP Haven OnDemand SSO for Spring Security
-Java library for working with HP Haven OnDemand SSO
+Java library for working with HPE Haven OnDemand SSO
 
 ## Usage
 The library is available from the central Maven repository.
@@ -73,5 +73,6 @@ Yes
 
 ## License
 Copyright 2015 Hewlett-Packard Development Company, L.P.
+Copyright 2015-2016 Hewlett Packard Enterprise Development LP
 
 Licensed under the MIT License (the "License"); you may not use this project except in compliance with the License.
