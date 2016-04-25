@@ -56,7 +56,7 @@ public class HodAuthenticationProvider implements AuthenticationProvider {
      * @param unboundTokenService   The unbound token service to get the unbound authentication UUID from
      * @param userStoreUsersService The user store users service that will get user metadata
      * @param metadataTypes         Metadata keys and types to retrieve and incorporate into the HodAuthentication principal
-     * @param hodUsernameResolver      The strategy to extract usernames from users' metadata
+     * @param hodUsernameResolver   The strategy to extract usernames from users' metadata
      */
     public HodAuthenticationProvider(
             final TokenRepository tokenRepository,
@@ -184,7 +184,7 @@ public class HodAuthenticationProvider implements AuthenticationProvider {
                 .add(new HodApplicationGrantedAuthority(applicationIdentifier))
                 .build();
 
-        return new HodAuthentication(
+        return new HodAuthentication<>(
                 combinedTokenProxy,
                 grantedAuthorities,
                 principal

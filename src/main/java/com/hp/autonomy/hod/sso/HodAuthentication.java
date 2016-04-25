@@ -22,28 +22,28 @@ import java.util.Collection;
  * {@link HodApplicationGrantedAuthority}
  */
 @EqualsAndHashCode(callSuper = true)
-public class HodAuthentication extends AbstractAuthenticationToken {
-    private static final long serialVersionUID = -8505398304901010960L;
+public class HodAuthentication<E extends EntityType> extends AbstractAuthenticationToken {
+    private static final long serialVersionUID = -4211186433120477158L;
 
-    private final TokenProxy<EntityType.Combined, TokenType.Simple> combinedTokenProxy;
+    private final TokenProxy<E, TokenType.Simple> tokenProxy;
     private final HodAuthenticationPrincipal principal;
 
     /**
      * Creates a new HodAuthentication representing a combined token.
-     * @param combinedTokenProxy The TokenProxy associated with the session
+     * @param tokenProxy  The TokenProxy associated with the session
      * @param authorities The GrantedAuthorities associated with the session
-     * @param principal The HOD application and user authenticated by this token
+     * @param principal   The HOD application and user authenticated by this token
      */
     public HodAuthentication(
-        final TokenProxy<EntityType.Combined, TokenType.Simple> combinedTokenProxy,
-        final Collection<? extends GrantedAuthority> authorities,
-        final HodAuthenticationPrincipal principal
+            final TokenProxy<E, TokenType.Simple> tokenProxy,
+            final Collection<? extends GrantedAuthority> authorities,
+            final HodAuthenticationPrincipal principal
     ) {
         super(authorities);
         super.setAuthenticated(true);
 
         this.principal = principal;
-        this.combinedTokenProxy = combinedTokenProxy;
+        this.tokenProxy = tokenProxy;
     }
 
     /**
@@ -66,8 +66,8 @@ public class HodAuthentication extends AbstractAuthenticationToken {
     /**
      * @return The {@link TokenProxy} associated with the session
      */
-    public TokenProxy<EntityType.Combined, TokenType.Simple> getTokenProxy() {
-        return combinedTokenProxy;
+    public TokenProxy<E, TokenType.Simple> getTokenProxy() {
+        return tokenProxy;
     }
 
     /**

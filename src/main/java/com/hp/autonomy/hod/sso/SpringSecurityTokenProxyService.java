@@ -16,17 +16,17 @@ import org.springframework.security.core.context.SecurityContextHolder;
  * {@link TokenProxyService} which retrieves the token proxy from the Spring Security Context if the stored
  * authentication is a {@link HodAuthentication}.
  */
-public class SpringSecurityTokenProxyService implements TokenProxyService<EntityType.Combined, TokenType.Simple> {
-
+public class SpringSecurityTokenProxyService<E extends EntityType> implements TokenProxyService<E, TokenType.Simple> {
     @Override
-    public TokenProxy<EntityType.Combined, TokenType.Simple> getTokenProxy() {
+    public TokenProxy<E, TokenType.Simple> getTokenProxy() {
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (!(authentication instanceof HodAuthentication)) {
             return null;
         }
 
-        return ((HodAuthentication) authentication).getTokenProxy();
+        // Usage of this class requires that the application is using HodAuthentications
+        //noinspection unchecked
+        return ((HodAuthentication<E>) authentication).getTokenProxy();
     }
-
 }

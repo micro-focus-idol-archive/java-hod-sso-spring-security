@@ -77,19 +77,19 @@ public class HodAuthenticationTest {
 
     @Test
     public void serializesAndDeserializes() throws IOException, ClassNotFoundException {
-        final HodAuthentication authentication = new HodAuthentication(
-            new TokenProxy<>(EntityType.Combined.INSTANCE, TokenType.Simple.INSTANCE),
-            Collections.singleton(GRANTED_AUTHORITY),
-            PRINCIPAL
+        final HodAuthentication<EntityType.Combined> authentication = new HodAuthentication<>(
+                new TokenProxy<>(EntityType.Combined.INSTANCE, TokenType.Simple.INSTANCE),
+                Collections.singleton(GRANTED_AUTHORITY),
+                PRINCIPAL
         );
 
-        final HodAuthentication outputAuthentication = writeAndReadObject(authentication);
+        final HodAuthentication<EntityType.Combined> outputAuthentication = writeAndReadObject(authentication);
         assertThat(outputAuthentication, is(authentication));
     }
 
     @Test
     public void deserializes() throws IOException, ClassNotFoundException {
-        final HodAuthentication deserializedAuthentication = deserializeFromResource("serializedHodAuthentication.ser");
+        final HodAuthentication<EntityType.Combined> deserializedAuthentication = deserializeFromResource("serializedHodAuthentication.ser");
         assertThat(deserializedAuthentication.getTokenProxy(), not(nullValue()));
 
         final Collection<GrantedAuthority> authorities = deserializedAuthentication.getAuthorities();
