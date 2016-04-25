@@ -49,7 +49,7 @@ public class UnboundTokenServiceImpl implements UnboundTokenService<TokenType.Hm
     }
 
     private TokenAndUuid authenticate() throws HodErrorException {
-        final ApiKey apiKey = new ApiKey(configService.getConfig().getApiKey());
+        final ApiKey apiKey = configService.getConfig().getApiKey();
 
         TokenAndUuid tokenAndUuid = cache.get();
 

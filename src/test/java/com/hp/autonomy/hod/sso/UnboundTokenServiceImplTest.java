@@ -45,7 +45,7 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.*;
 
 public class UnboundTokenServiceImplTest {
-    private static final String API_KEY = "123-api-key";
+    private static final ApiKey API_KEY = new ApiKey("123-api-key");
     private static final UUID AUTH_UUID = UUID.randomUUID();
     private static final long TIME_OUT_SECONDS = 3;
 
@@ -208,7 +208,7 @@ public class UnboundTokenServiceImplTest {
     }
 
     private OngoingStubbing<AuthenticationToken<EntityType.Unbound, TokenType.HmacSha1>> mockAuthenticateUnbound() throws HodErrorException {
-        return when(authenticationService.authenticateUnbound(new ApiKey(API_KEY), TokenType.HmacSha1.INSTANCE));
+        return when(authenticationService.authenticateUnbound(API_KEY, TokenType.HmacSha1.INSTANCE));
     }
 
     private <T> void checkOutput(final Try<T> actual, final T expectation, final HodErrorException exception) {

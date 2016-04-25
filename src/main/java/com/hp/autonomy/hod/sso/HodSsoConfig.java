@@ -5,6 +5,8 @@
 
 package com.hp.autonomy.hod.sso;
 
+import com.hp.autonomy.hod.client.api.authentication.ApiKey;
+
 import java.util.Set;
 
 /**
@@ -15,7 +17,7 @@ public interface HodSsoConfig {
     /**
      * @return The application API key to use for authentication
      */
-    String getApiKey();
+    ApiKey getApiKey();
 
     /**
      * @return The origins from which the signed request can be sent
