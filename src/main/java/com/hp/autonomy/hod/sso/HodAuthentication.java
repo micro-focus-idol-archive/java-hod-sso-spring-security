@@ -17,9 +17,10 @@ import java.util.Collection;
 
 /**
  * Spring Security Authentication which combines an HP Haven OnDemand {@link TokenProxy} with a username and application
- * details. This Authentication is authenticated at creation time
+ * details. This Authentication is authenticated at creation time.
  * For access control decisions, the GrantedAuthorities should be checked for the correct
- * {@link HodApplicationGrantedAuthority}
+ * {@link HodApplicationGrantedAuthority}.
+ * @param <E> Entity type of token proxies contained in the authentication.
  */
 @EqualsAndHashCode(callSuper = true)
 public class HodAuthentication<E extends EntityType> extends AbstractAuthenticationToken {
