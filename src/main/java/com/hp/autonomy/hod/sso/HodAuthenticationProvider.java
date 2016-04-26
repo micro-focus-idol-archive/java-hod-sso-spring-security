@@ -31,7 +31,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * AuthenticationProvider which consumes {@link HodTokenAuthentication} and produces {@link HodAuthentication}
@@ -41,7 +40,6 @@ public class HodAuthenticationProvider implements AuthenticationProvider {
     private final TokenRepository tokenRepository;
     private final AuthenticationService authenticationService;
     private final UserStoreUsersService userStoreUsersService;
-    private final AtomicReference<UUID> unboundAuthenticationUuid = new AtomicReference<>();
     private final Map<String, Class<? extends Serializable>> metadataTypes;
     private final HodUsernameResolver hodUsernameResolver;
     private final UnboundTokenService<TokenType.HmacSha1> unboundTokenService;
@@ -134,15 +132,15 @@ public class HodAuthenticationProvider implements AuthenticationProvider {
             }
         }
 
-        if (unboundAuthenticationUuid.get() == null) {
-            try {
-                unboundAuthenticationUuid.set(unboundTokenService.getAuthenticationUuid());
-            } catch (final HodErrorException e) {
-                throw new AuthenticationServiceException("HOD returned an error while authenticating", e);
-            }
+        final UUID unboundAuthenticationUuid;
+
+        try {
+            unboundAuthenticationUuid = unboundTokenService.getAuthenticationUuid();
+        } catch (final HodErrorException e) {
+            throw new AuthenticationServiceException("HOD returned an error while authenticating", e);
         }
 
-        if (!unboundAuthenticationUuid.get().equals(combinedTokenInformation.getApplication().getAuthentication().getUuid())) {
+        if (!unboundAuthenticationUuid.equals(combinedTokenInformation.getApplication().getAuthentication().getUuid())) {
             // The provided combined token was not generated with our unbound token
             throw new BadCredentialsException("Invalid combined token");
         }
