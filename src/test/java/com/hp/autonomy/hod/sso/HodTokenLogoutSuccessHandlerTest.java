@@ -93,7 +93,7 @@ public class HodTokenLogoutSuccessHandlerTest {
                 null
         );
 
-        final HodAuthentication authentication = new HodAuthentication(
+        final HodAuthentication<EntityType.Combined> authentication = new HodAuthentication<>(
                 tokenProxy,
                 Collections.<GrantedAuthority>emptySet(),
                 principal

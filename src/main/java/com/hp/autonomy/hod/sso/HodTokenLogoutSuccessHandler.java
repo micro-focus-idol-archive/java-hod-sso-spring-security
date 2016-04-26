@@ -49,7 +49,11 @@ public class HodTokenLogoutSuccessHandler implements LogoutSuccessHandler {
         String redirectUrl = redirectPath;
 
         if (authentication instanceof HodAuthentication) {
-            final AuthenticationToken<EntityType.Combined, TokenType.Simple> combinedToken = tokenRepository.get(((HodAuthentication) authentication).getTokenProxy());
+            // Usage of this class requires that application authentications are HodAuthentication<Combined>.
+            @SuppressWarnings("unchecked")
+            final HodAuthentication<EntityType.Combined> hodAuthentication = (HodAuthentication<EntityType.Combined>) authentication;
+
+            final AuthenticationToken<EntityType.Combined, TokenType.Simple> combinedToken = tokenRepository.get(hodAuthentication.getTokenProxy());
             redirectUrl += "?token=" + uriEncode(combinedToken.toString());
         }
 
