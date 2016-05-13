@@ -42,6 +42,7 @@ public class HodAuthenticationProvider implements AuthenticationProvider {
     private final Map<String, Class<? extends Serializable>> metadataTypes;
     private final HodUsernameResolver hodUsernameResolver;
     private final UnboundTokenService<TokenType.HmacSha1> unboundTokenService;
+    private final SecurityInfoRetriever securityInfoRetriever;
 
     /**
      * Creates a new HodAuthenticationProvider which fetches the given user metadata keys. Note: this will only work if
@@ -63,7 +64,8 @@ public class HodAuthenticationProvider implements AuthenticationProvider {
             final UnboundTokenService<TokenType.HmacSha1> unboundTokenService,
             final UserStoreUsersService userStoreUsersService,
             final Map<String, Class<? extends Serializable>> metadataTypes,
-            final HodUsernameResolver hodUsernameResolver
+            final HodUsernameResolver hodUsernameResolver,
+            final SecurityInfoRetriever securityInfoRetriever
     ) {
         this.tokenRepository = tokenRepository;
         this.authenticationService = authenticationService;
@@ -72,6 +74,7 @@ public class HodAuthenticationProvider implements AuthenticationProvider {
         this.hodUsernameResolver = hodUsernameResolver;
         this.unboundTokenService = unboundTokenService;
         this.authoritiesResolver = authoritiesResolver;
+        this.securityInfoRetriever = securityInfoRetriever;
     }
 
     /**
@@ -88,7 +91,7 @@ public class HodAuthenticationProvider implements AuthenticationProvider {
             final AuthenticationService authenticationService,
             final UnboundTokenService<TokenType.HmacSha1> unboundTokenService
     ) {
-        this(tokenRepository, authoritiesResolver, authenticationService, unboundTokenService, null, null, null);
+        this(tokenRepository, authoritiesResolver, authenticationService, unboundTokenService, null, null, null, null);
     }
 
     /**
@@ -113,7 +116,20 @@ public class HodAuthenticationProvider implements AuthenticationProvider {
             final Map<String, Class<? extends Serializable>> metadataTypes,
             final HodUsernameResolver hodUsernameResolver
     ) {
-        this(tokenRepository, new ConstantAuthoritiesResolver(role), authenticationService, unboundTokenService, userStoreUsersService, metadataTypes, hodUsernameResolver);
+        this(tokenRepository, new ConstantAuthoritiesResolver(role), authenticationService, unboundTokenService, userStoreUsersService, metadataTypes, hodUsernameResolver, null);
+    }
+
+    public HodAuthenticationProvider(
+            final TokenRepository tokenRepository,
+            final String role,
+            final AuthenticationService authenticationService,
+            final UnboundTokenService<TokenType.HmacSha1> unboundTokenService,
+            final UserStoreUsersService userStoreUsersService,
+            final Map<String, Class<? extends Serializable>> metadataTypes,
+            final HodUsernameResolver hodUsernameResolver,
+            final SecurityInfoRetriever securityInfoRetriever
+    ) {
+        this(tokenRepository, new ConstantAuthoritiesResolver(role), authenticationService, unboundTokenService, userStoreUsersService, metadataTypes, hodUsernameResolver, securityInfoRetriever);
     }
 
     /**
@@ -135,7 +151,7 @@ public class HodAuthenticationProvider implements AuthenticationProvider {
             final UserStoreUsersService userStoreUsersService,
             final Map<String, Class<? extends Serializable>> metadataTypes
     ) {
-        this(tokenRepository, role, authenticationService, unboundTokenService, userStoreUsersService, metadataTypes, null);
+        this(tokenRepository, role, authenticationService, unboundTokenService, userStoreUsersService, metadataTypes, null, null);
     }
 
     /**
@@ -152,7 +168,7 @@ public class HodAuthenticationProvider implements AuthenticationProvider {
             final AuthenticationService authenticationService,
             final UnboundTokenService<TokenType.HmacSha1> unboundTokenService
     ) {
-        this(tokenRepository, role, authenticationService, unboundTokenService, null, null, null);
+        this(tokenRepository, role, authenticationService, unboundTokenService, null, null, null, null);
     }
 
     /**
@@ -215,7 +231,20 @@ public class HodAuthenticationProvider implements AuthenticationProvider {
             }
         }
 
-        final HodAuthenticationPrincipal principal = new HodAuthenticationPrincipal(combinedTokenInformation, name, metadata);
+        String securityInfo = null;
+
+        if (securityInfoRetriever != null) {
+            try {
+                securityInfo = securityInfoRetriever.getSecurityInfo(combinedTokenInformation.getUser());
+            } catch (final Exception e) {
+                throw new AuthenticationServiceException("There was an error while authenticating", e);
+            }
+            if (securityInfo == null) {
+                throw new AuthenticationServiceException("There was an error while authenticating");
+            }
+        }
+
+        final HodAuthenticationPrincipal principal = new HodAuthenticationPrincipal(combinedTokenInformation, name, metadata, securityInfo);
         final ResourceIdentifier applicationIdentifier = combinedTokenInformation.getApplication().getIdentifier();
 
         // Resolve application granted authorities, adding an authority representing the HOD application

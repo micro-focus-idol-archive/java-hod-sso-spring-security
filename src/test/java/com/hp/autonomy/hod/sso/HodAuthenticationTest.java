@@ -70,7 +70,8 @@ public class HodAuthenticationTest {
             APP_AUTHENTICATION,
             USER_AUTHENTICATION,
             NAME,
-            METADATA
+            METADATA,
+            null
     );
 
     private static final GrantedAuthority GRANTED_AUTHORITY = new SimpleGrantedAuthority("ROLE_ADMIN");
