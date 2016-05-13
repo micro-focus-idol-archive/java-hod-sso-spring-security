@@ -34,6 +34,7 @@ public class HodAuthenticationPrincipal implements Principal, Serializable {
     private final AuthenticationInformation applicationAuthentication;
     private final AuthenticationInformation userAuthentication;
     private final String name;
+    private final String securityInfo;
     private transient Map<String, Serializable> userMetadata;
 
     public HodAuthenticationPrincipal(
@@ -44,7 +45,8 @@ public class HodAuthenticationPrincipal implements Principal, Serializable {
             final AuthenticationInformation applicationAuthentication,
             final AuthenticationInformation userAuthentication,
             final String name,
-            final Map<String, Serializable> userMetadata
+            final Map<String, Serializable> userMetadata,
+            final String securityInfo
     ) {
         this.tenantUuid = tenantUuid;
         this.userUuid = userUuid;
@@ -53,6 +55,7 @@ public class HodAuthenticationPrincipal implements Principal, Serializable {
         this.applicationAuthentication = applicationAuthentication;
         this.userAuthentication = userAuthentication;
         this.name = name;
+        this.securityInfo = securityInfo;
 
         this.userMetadata = userMetadata == null ? new HashMap<String, Serializable>() : userMetadata;
     }
@@ -66,7 +69,22 @@ public class HodAuthenticationPrincipal implements Principal, Serializable {
                 tokenInformation.getApplication().getAuthentication(),
                 tokenInformation.getUser().getAuthentication(),
                 name,
-                userMetadata
+                userMetadata,
+                null
+        );
+    }
+
+    public HodAuthenticationPrincipal(final CombinedTokenInformation tokenInformation, final String name, final Map<String, Serializable> userMetadata, final String securityInfo) {
+        this(
+                tokenInformation.getTenantUuid(),
+                tokenInformation.getUser().getUuid(),
+                tokenInformation.getApplication().getIdentifier(),
+                tokenInformation.getUserStore(),
+                tokenInformation.getApplication().getAuthentication(),
+                tokenInformation.getUser().getAuthentication(),
+                name,
+                userMetadata,
+                securityInfo
         );
     }
 

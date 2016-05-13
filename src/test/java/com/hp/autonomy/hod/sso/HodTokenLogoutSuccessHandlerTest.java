@@ -90,6 +90,7 @@ public class HodTokenLogoutSuccessHandlerTest {
                 new AuthenticationInformation(UUID.randomUUID(), AuthenticationType.LEGACY_API_KEY),
                 new AuthenticationInformation(UUID.randomUUID(), AuthenticationType.LEGACY_API_KEY),
                 null,
+                null,
                 null
         );
 
