@@ -89,11 +89,6 @@ public class HodAuthenticationPrincipal implements Principal, Serializable {
     }
 
     @Override
-    public String getName() {
-        return name != null ? name : userUuid.toString();
-    }
-
-    @Override
     public String toString() {
         return new ToStringBuilder(this)
                 .append("tenantUuid", tenantUuid)
