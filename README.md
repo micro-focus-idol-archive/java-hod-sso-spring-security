@@ -7,7 +7,7 @@ The library is available from the central Maven repository.
     <dependency>
         <groupId>com.hp.autonomy.hod</groupId>
         <artifactId>hod-sso-spring-security</artifactId>
-        <version>0.5.1</version>
+        <version>0.6.0</version>
     </dependency>
     
 ## Setup
