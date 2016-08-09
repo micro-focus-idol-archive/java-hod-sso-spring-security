@@ -14,9 +14,12 @@ import com.hp.autonomy.hod.client.api.authentication.TokenType;
 import com.hp.autonomy.hod.client.api.authentication.tokeninformation.ApplicationInformation;
 import com.hp.autonomy.hod.client.api.authentication.tokeninformation.AuthenticationInformation;
 import com.hp.autonomy.hod.client.api.authentication.tokeninformation.CombinedTokenInformation;
+import com.hp.autonomy.hod.client.api.authentication.tokeninformation.GroupInformation;
+import com.hp.autonomy.hod.client.api.authentication.tokeninformation.GroupUserStoreInformation;
 import com.hp.autonomy.hod.client.api.authentication.tokeninformation.UserInformation;
 import com.hp.autonomy.hod.client.api.authentication.tokeninformation.UserStoreInformation;
 import com.hp.autonomy.hod.client.api.resource.ResourceIdentifier;
+import com.hp.autonomy.hod.client.api.userstore.user.Account;
 import com.hp.autonomy.hod.client.api.userstore.user.UserStoreUsersService;
 import com.hp.autonomy.hod.client.error.HodError;
 import com.hp.autonomy.hod.client.error.HodErrorCode;
@@ -37,6 +40,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.UUID;
 
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -185,7 +189,10 @@ public class HodAuthenticationProviderTest {
 
         final ApplicationInformation applicationInformation = new ApplicationInformation(APPLICATION_NAME, APPLICATION_DOMAIN, applicationAuthenticationInformation);
         final UserStoreInformation userStoreInformation = new UserStoreInformation(UUID.randomUUID(), "user_store_name", "user_store_domain");
-        final UserInformation userInformation = new UserInformation(USER_UUID, userAuthenticationInformation);
+        final Account account = new Account(Account.Type.EMAIL, "meg.whitman@hpe.com", Account.Status.CONFIRMED, true);
+        final GroupUserStoreInformation groupUserStoreInformation = new GroupUserStoreInformation("user_store_name", "user_store_domain", "user_store_domain:user_store_domain");
+        final GroupInformation groupInformation = new GroupInformation(groupUserStoreInformation, Collections.singleton("ceo"));
+        final UserInformation userInformation = new UserInformation(USER_UUID, userAuthenticationInformation, Collections.singletonList(account), Collections.singletonList(groupInformation));
 
         return new CombinedTokenInformation(UUID.randomUUID(), applicationInformation, userStoreInformation, userInformation);
     }
