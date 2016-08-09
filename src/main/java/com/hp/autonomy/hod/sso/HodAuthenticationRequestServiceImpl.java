@@ -11,7 +11,9 @@ import com.hp.autonomy.hod.client.api.authentication.SignedRequest;
 import com.hp.autonomy.hod.client.api.authentication.TokenType;
 import com.hp.autonomy.hod.client.error.HodErrorException;
 
-import java.util.Set;
+import java.net.URL;
+import java.util.Collection;
+import java.util.Collections;
 
 /**
  * Default implementation of HodAuthenticationRequestService
@@ -64,7 +66,28 @@ public class HodAuthenticationRequestServiceImpl implements HodAuthenticationReq
         );
     }
 
-    private Set<String> getAllowedOrigins() {
+    @Override
+    public SignedRequest getCombinedPatchRequest(final URL redirectUrl) throws HodErrorException, InvalidOriginException {
+        final String redirectOrigin = resolveOrigin(redirectUrl);
+
+        if (getAllowedOrigins().contains(redirectOrigin)) {
+            final URL ssoUrl = configService.getConfig().getSsoUrl();
+
+            return authenticationService.combinedPatchRequest(
+                    Collections.singleton(resolveOrigin(ssoUrl)),
+                    redirectUrl.toString(),
+                    unboundTokenService.getUnboundToken()
+            );
+        } else {
+            throw new InvalidOriginException(redirectUrl);
+        }
+    }
+
+    private Collection<String> getAllowedOrigins() {
         return configService.getConfig().getAllowedOrigins();
+    }
+
+    private String resolveOrigin(final URL url) {
+        return url.getProtocol() + "://" + url.getAuthority();
     }
 }

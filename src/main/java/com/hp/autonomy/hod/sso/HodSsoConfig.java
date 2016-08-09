@@ -7,6 +7,7 @@ package com.hp.autonomy.hod.sso;
 
 import com.hp.autonomy.hod.client.api.authentication.ApiKey;
 
+import java.net.URL;
 import java.util.Set;
 
 /**
@@ -23,5 +24,11 @@ public interface HodSsoConfig {
      * @return The origins from which the signed request can be sent
      */
     Set<String> getAllowedOrigins();
+
+    /**
+     * This is used to determine the allowed origin for the authenticate combined PATCH request.
+     * @return The URL of the SSO page, for example https://dev.havenondemand.com/sso.html
+     */
+    URL getSsoUrl();
 
 }
