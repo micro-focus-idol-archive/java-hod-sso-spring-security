@@ -12,7 +12,7 @@
 
     <groupId>com.hp.autonomy.hod</groupId>
     <artifactId>hod-sso-spring-security</artifactId>
-    <version>0.6.1</version>
+    <version>0.7.0-SNAPSHOT</version>
 
     <name>HP Haven OnDemand SSO Spring Security</name>
     <description>Library to assist with using HP Haven OnDemand SSO with Spring Security</description>
