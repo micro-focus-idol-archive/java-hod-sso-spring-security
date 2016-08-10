@@ -11,6 +11,7 @@ import com.hp.autonomy.hod.client.api.authentication.tokeninformation.UserStoreI
 import com.hp.autonomy.hod.client.api.resource.ResourceIdentifier;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.builder.ToStringBuilder;
 
 import java.io.IOException;
@@ -54,7 +55,7 @@ public class HodAuthenticationPrincipal implements Principal, Serializable {
         this.userStoreInformation = userStoreInformation;
         this.applicationAuthentication = applicationAuthentication;
         this.userAuthentication = userAuthentication;
-        this.name = name;
+        this.name = StringUtils.defaultString(name);
         this.securityInfo = securityInfo;
 
         this.userMetadata = userMetadata == null ? new HashMap<String, Serializable>() : userMetadata;
