@@ -23,6 +23,7 @@ import java.util.Set;
 
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.IsNot.not;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
@@ -68,7 +69,15 @@ public class HodAuthenticationRequestServiceImplTest {
     }
 
     @Test
-    public void getCombinedPatchRequest() throws HodErrorException, MalformedURLException, InvalidOriginException {
+    public void getCombinedPatchRequest() throws HodErrorException {
+        final SignedRequest expectedOutput = mock(SignedRequest.class);
+        when(authenticationService.combinedPatchRequest(Matchers.<Collection<String>>any(), eq(AUTHENTICATION_TOKEN))).thenReturn(expectedOutput);
+
+        assertSame(expectedOutput, requestService.getCombinedPatchRequest());
+    }
+
+    @Test
+    public void getSsoPageCombinedPatchRequest() throws HodErrorException, MalformedURLException, InvalidOriginException {
         final URL redirectUrl = new URL("http://127.0.0.1:8080/sso");
 
         when(authenticationService.combinedPatchRequest(Matchers.<Collection<String>>any(), Matchers.<String>any(), eq(AUTHENTICATION_TOKEN))).thenAnswer(new Answer<SignedRequest>() {
@@ -80,24 +89,24 @@ public class HodAuthenticationRequestServiceImplTest {
             }
         });
 
-        final SignedRequest output = requestService.getCombinedPatchRequest(redirectUrl);
+        final SignedRequest output = requestService.getSsoPageCombinedPatchRequest(redirectUrl);
 
         // If not null, the AuthenticationService was given the correct arguments
         assertThat(output, not(nullValue()));
     }
 
     @Test(expected = InvalidOriginException.class)
-    public void getCombinedPatchRequestInvalidRedirectPort() throws MalformedURLException, HodErrorException, InvalidOriginException {
-        requestService.getCombinedPatchRequest(new URL("http://127.0.0.1:8090/sso"));
+    public void getSsoPageCombinedPatchRequestInvalidRedirectPort() throws MalformedURLException, HodErrorException, InvalidOriginException {
+        requestService.getSsoPageCombinedPatchRequest(new URL("http://127.0.0.1:8090/sso"));
     }
 
     @Test(expected = InvalidOriginException.class)
-    public void getCombinedPatchRequestInvalidRedirectHost() throws MalformedURLException, HodErrorException, InvalidOriginException {
-        requestService.getCombinedPatchRequest(new URL("https://notallowed.example.com/sso"));
+    public void getSsoPageCombinedPatchRequestInvalidRedirectHost() throws MalformedURLException, HodErrorException, InvalidOriginException {
+        requestService.getSsoPageCombinedPatchRequest(new URL("https://notallowed.example.com/sso"));
     }
 
     @Test(expected = InvalidOriginException.class)
-    public void getCombinedPatchRequestInvalidProtocol() throws MalformedURLException, HodErrorException, InvalidOriginException {
-        requestService.getCombinedPatchRequest(new URL("http://example.com/login?secure=false"));
+    public void getSsoPageCombinedPatchRequestInvalidProtocol() throws MalformedURLException, HodErrorException, InvalidOriginException {
+        requestService.getSsoPageCombinedPatchRequest(new URL("http://example.com/login?secure=false"));
     }
 }
