@@ -20,6 +20,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
+/**
+ * An authentication processing filter which parses a combined SSO token from a POST body.
+ */
 public class SsoAuthenticationFilter extends AbstractAuthenticationProcessingFilter {
     public SsoAuthenticationFilter(final String authenticationPath) {
         super(new AntPathRequestMatcher(authenticationPath, "POST"));
@@ -37,8 +40,8 @@ public class SsoAuthenticationFilter extends AbstractAuthenticationProcessingFil
             throw new BadCredentialsException("Invalid user unbound token");
         }
 
-        final AuthenticationToken<EntityType.Combined, TokenType.Simple> token = new AuthenticationToken<>(
-            EntityType.Combined.INSTANCE,
+        final AuthenticationToken<EntityType.CombinedSso, TokenType.Simple> token = new AuthenticationToken<>(
+            EntityType.CombinedSso.INSTANCE,
             TokenType.Simple.INSTANCE,
             request.getParameter("type"),
             expiry,

@@ -6,6 +6,8 @@
 package com.hp.autonomy.hod.sso;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.hp.autonomy.hod.client.api.authentication.ApplicationAndUsers;
 import com.hp.autonomy.hod.client.api.authentication.AuthenticationService;
 import com.hp.autonomy.hod.client.api.authentication.AuthenticationToken;
 import com.hp.autonomy.hod.client.api.authentication.AuthenticationType;
@@ -33,14 +35,20 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import java.io.IOException;
+import java.io.Serializable;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -52,6 +60,8 @@ import static org.mockito.Mockito.*;
 public class HodAuthenticationProviderTest {
     private static final String APPLICATION_NAME = "application_name";
     private static final String APPLICATION_DOMAIN = "application_domain";
+    private static final String USERSTORE_NAME = "userstore_name";
+    private static final String USERSTORE_DOMAIN = "userstore_domain";
     private static final UUID USER_UUID = UUID.randomUUID();
     private static final String USER_ROLE = "ROLE_USER";
 
@@ -67,26 +77,35 @@ public class HodAuthenticationProviderTest {
     @Mock
     private TokenRepository tokenRepository;
 
+    private AuthenticationToken<EntityType.Unbound, TokenType.HmacSha1> unboundToken;
+    private AuthenticationToken<EntityType.CombinedSso, TokenType.Simple> combinedSsoToken;
     private AuthenticationToken<EntityType.Combined, TokenType.Simple> combinedToken;
     private TokenProxy<EntityType.Combined, TokenType.Simple> tokenProxy;
-    private UUID applicationAuthenticationUuid;
 
     @Before
     public void initialise() throws IOException, HodErrorException {
         tokenProxy = new TokenProxy<>(EntityType.Combined.INSTANCE, TokenType.Simple.INSTANCE);
-        applicationAuthenticationUuid = UUID.randomUUID();
 
-        combinedToken = new AuthenticationToken<>(
-                EntityType.Combined.INSTANCE,
-                TokenType.Simple.INSTANCE,
-                DateTime.now().plus(Hours.TWO),
-                "token-id",
-                "token-secret",
-                DateTime.now().plus(Hours.ONE)
-        );
+        combinedToken = mockToken(EntityType.Combined.INSTANCE, TokenType.Simple.INSTANCE);
+        unboundToken = mockToken(EntityType.Unbound.INSTANCE, TokenType.HmacSha1.INSTANCE);
+        combinedSsoToken = mockToken(EntityType.CombinedSso.INSTANCE, TokenType.Simple.INSTANCE);
+
+        when(unboundTokenService.getUnboundToken()).thenReturn(unboundToken);
+        when(authenticationService.authenticateCombinedGet(combinedSsoToken, unboundToken)).thenReturn(mockApplicationAndUsersList(TokenType.Simple.INSTANCE));
+
+        when(authenticationService.authenticateCombined(
+                combinedSsoToken,
+                unboundToken,
+                APPLICATION_DOMAIN,
+                APPLICATION_NAME,
+                USERSTORE_DOMAIN,
+                USERSTORE_NAME,
+                TokenType.Simple.INSTANCE
+        )).thenReturn(combinedToken);
+
+        when(authenticationService.getCombinedTokenInformation(combinedToken)).thenReturn(mockCombinedTokenInformation());
 
         when(tokenRepository.insert(combinedToken)).thenReturn(tokenProxy);
-        when(unboundTokenService.getAuthenticationUuid()).thenReturn(applicationAuthenticationUuid);
     }
 
     @Test
@@ -101,39 +120,78 @@ public class HodAuthenticationProviderTest {
         assertThat(provider.supports(Authentication.class), is(false));
     }
 
-    @Test(expected = BadCredentialsException.class)
-    public void failsAuthenticationIfCombinedTokenInvalid() throws HodErrorException {
-        final HodError hodError = new HodError.Builder()
-                .setErrorCode(HodErrorCode.AUTHENTICATION_FAILED)
-                .setDetail("Authentication failed")
-                .build();
+    @Test(expected = AuthenticationServiceException.class)
+    public void handlesHodErrorExceptionFromUnboundTokenService() throws HodErrorException {
+        when(unboundTokenService.getUnboundToken()).thenThrow(mockAuthenticationFailedException());
 
-        when(authenticationService.getCombinedTokenInformation(combinedToken)).thenThrow(new HodErrorException(hodError, 401));
-
-        final HodAuthenticationProvider provider = createSimpleProvider();
-        provider.authenticate(new HodTokenAuthentication(combinedToken));
+        createSimpleProvider().authenticate(new HodTokenAuthentication(combinedSsoToken));
     }
 
     @Test(expected = BadCredentialsException.class)
-    public void failsAuthenticationIfCombinedTokenApplicationAuthenticationUuidIncorrect() throws HodErrorException {
-        // For this test, this shouldn't be the same as the applicationAuthenticationUuid returned from the unbound service
-        final UUID incorrectUuid = UUID.randomUUID();
-        final CombinedTokenInformation combinedTokenInformation = createCombinedTokenInformation(incorrectUuid);
+    public void failsAuthenticationIfCombinedSsoTokenInvalid() throws HodErrorException {
+        when(authenticationService.authenticateCombinedGet(combinedSsoToken, unboundToken)).thenThrow(mockAuthenticationFailedException());
 
-        when(authenticationService.getCombinedTokenInformation(combinedToken)).thenReturn(combinedTokenInformation);
-
-        final HodAuthenticationProvider provider = createSimpleProvider();
-        provider.authenticate(new HodTokenAuthentication(combinedToken));
+        createSimpleProvider().authenticate(new HodTokenAuthentication(combinedSsoToken));
     }
+
+    @Test(expected = AuthenticationServiceException.class)
+    public void handlesHodErrorOnAuthenticateCombinedGet() throws HodErrorException {
+        when(authenticationService.authenticateCombinedGet(combinedSsoToken, unboundToken)).thenThrow(mockFatalDatabaseException());
+
+        createSimpleProvider().authenticate(new HodTokenAuthentication(combinedSsoToken));
+    }
+
+    @Test(expected = BadCredentialsException.class)
+    public void failsAuthenticationIfNoApplications() throws HodErrorException {
+        when(authenticationService.authenticateCombinedGet(combinedSsoToken, unboundToken)).thenReturn(Collections.<ApplicationAndUsers>emptyList());
+
+        createSimpleProvider().authenticate(new HodTokenAuthentication(combinedSsoToken));
+    }
+
+    @Test(expected = AuthenticationServiceException.class)
+    public void failsAuthenticationIfSimpleTokenTypeNotAllowed() throws HodErrorException {
+        when(authenticationService.authenticateCombinedGet(combinedSsoToken, unboundToken)).thenReturn(mockApplicationAndUsersList(TokenType.HmacSha1.INSTANCE));
+
+        createSimpleProvider().authenticate(new HodTokenAuthentication(combinedSsoToken));
+    }
+
+    @Test(expected = AuthenticationServiceException.class)
+    public void handlesHodExceptionFromAuthenticateCombined() throws HodErrorException {
+        when(authenticationService.authenticateCombined(
+                combinedSsoToken,
+                unboundToken,
+                APPLICATION_DOMAIN,
+                APPLICATION_NAME,
+                USERSTORE_DOMAIN,
+                USERSTORE_NAME,
+                TokenType.Simple.INSTANCE
+        )).thenThrow(mockFatalDatabaseException());
+
+        createSimpleProvider().authenticate(new HodTokenAuthentication(combinedSsoToken));
+    }
+
+    @Test(expected = AuthenticationServiceException.class)
+    public void handlesHodErrorExceptionFromCombinedTokenInformation() throws HodErrorException {
+        when(authenticationService.getCombinedTokenInformation(combinedToken)).thenThrow(mockFatalDatabaseException());
+
+        createSimpleProvider().authenticate(new HodTokenAuthentication(combinedSsoToken));
+    }
+
+    @Test(expected = AuthenticationServiceException.class)
+    public void handlesIOExceptionFromTokenRepository() throws IOException {
+        when(tokenRepository.insert(combinedToken)).thenThrow(mock(IOException.class));
+
+        createSimpleProvider().authenticate(new HodTokenAuthentication(combinedSsoToken));
+    }
+
 
     @Test
     public void authenticatesWithRole() throws HodErrorException, IOException {
-        when(authenticationService.getCombinedTokenInformation(combinedToken)).thenReturn(createCombinedTokenInformation(applicationAuthenticationUuid));
-
         final HodAuthenticationProvider provider = createSimpleProvider();
+        final Authentication tokenAuthentication = new HodTokenAuthentication(combinedSsoToken);
 
         @SuppressWarnings("unchecked")
-        final HodAuthentication<EntityType.Combined> authentication = (HodAuthentication<EntityType.Combined>) provider.authenticate(new HodTokenAuthentication(combinedToken));
+        final HodAuthentication<EntityType.Combined> authentication = (HodAuthentication<EntityType.Combined>) provider.authenticate(tokenAuthentication);
 
         verify(tokenRepository, times(1)).insert(combinedToken);
 
@@ -155,8 +213,6 @@ public class HodAuthenticationProviderTest {
 
     @Test
     public void authenticatesWithAuthoritiesResolver() throws HodErrorException {
-        when(authenticationService.getCombinedTokenInformation(combinedToken)).thenReturn(createCombinedTokenInformation(applicationAuthenticationUuid));
-
         final GrantedAuthoritiesResolver resolver = new GrantedAuthoritiesResolver() {
             @Override
             public Collection<GrantedAuthority> resolveAuthorities(final TokenProxy<EntityType.Combined, TokenType.Simple> tokenProxy, final CombinedTokenInformation combinedTokenInformation) {
@@ -167,10 +223,8 @@ public class HodAuthenticationProviderTest {
             }
         };
 
-        final HodAuthenticationProvider provider = new HodAuthenticationProvider(tokenRepository, resolver, authenticationService, unboundTokenService);
-
-        @SuppressWarnings("unchecked")
-        final HodAuthentication<EntityType.Combined> authentication = (HodAuthentication<EntityType.Combined>) provider.authenticate(new HodTokenAuthentication(combinedToken));
+        final AuthenticationProvider provider = new HodAuthenticationProvider(tokenRepository, resolver, authenticationService, unboundTokenService);
+        final Authentication authentication = provider.authenticate(new HodTokenAuthentication(combinedSsoToken));
 
         assertThat(authentication.getAuthorities(), containsInAnyOrder(
                 new SimpleGrantedAuthority("ROLE_1"),
@@ -179,21 +233,98 @@ public class HodAuthenticationProviderTest {
         ));
     }
 
+    @Test
+    public void authenticatesWithUsernameResolver() throws HodErrorException {
+        final ImmutableMap<String, Class<? extends Serializable>> metadataTypes = ImmutableMap.<String, Class<? extends Serializable>>builder()
+                .put("username", String.class)
+                .put("manager", String.class)
+                .build();
+
+        final AuthenticationProvider provider = new HodAuthenticationProvider(
+                tokenRepository,
+                USER_ROLE,
+                authenticationService,
+                unboundTokenService,
+                userStoreUsersService,
+                metadataTypes,
+                new HodUsernameResolver() {
+                    @Override
+                    public String resolve(final Map<String, Serializable> metadata) {
+                        return (String) metadata.get("username");
+                    }
+                }
+        );
+
+        final Map<String, Serializable> metadata = ImmutableMap.<String, Serializable>builder()
+                .put("username", "fred")
+                .put("manager", "penny")
+                .build();
+
+        when(userStoreUsersService.getUserMetadata(tokenProxy, new ResourceIdentifier(USERSTORE_DOMAIN, USERSTORE_NAME), USER_UUID, metadataTypes))
+                .thenReturn(metadata);
+
+        final Authentication authentication = provider.authenticate(new HodTokenAuthentication(combinedSsoToken));
+        assertThat(authentication.getName(), is("fred"));
+    }
+
     private HodAuthenticationProvider createSimpleProvider() {
         return new HodAuthenticationProvider(tokenRepository, USER_ROLE, authenticationService, unboundTokenService);
     }
 
-    private CombinedTokenInformation createCombinedTokenInformation(final UUID applicationAuthenticationUuid) {
-        final AuthenticationInformation applicationAuthenticationInformation = new AuthenticationInformation(applicationAuthenticationUuid, AuthenticationType.LEGACY_API_KEY);
+    private CombinedTokenInformation mockCombinedTokenInformation() {
+        final AuthenticationInformation applicationAuthenticationInformation = new AuthenticationInformation(UUID.randomUUID(), AuthenticationType.LEGACY_API_KEY);
         final AuthenticationInformation userAuthenticationInformation = new AuthenticationInformation(UUID.randomUUID(), AuthenticationType.LEGACY_API_KEY);
 
         final ApplicationInformation applicationInformation = new ApplicationInformation(APPLICATION_NAME, APPLICATION_DOMAIN, applicationAuthenticationInformation);
-        final UserStoreInformation userStoreInformation = new UserStoreInformation(UUID.randomUUID(), "user_store_name", "user_store_domain");
+        final UserStoreInformation userStoreInformation = new UserStoreInformation(UUID.randomUUID(), USERSTORE_NAME, USERSTORE_DOMAIN);
         final Account account = new Account(Account.Type.EMAIL, "meg.whitman@hpe.com", Account.Status.CONFIRMED, true);
-        final GroupUserStoreInformation groupUserStoreInformation = new GroupUserStoreInformation("user_store_name", "user_store_domain", "user_store_domain:user_store_domain");
+        final GroupUserStoreInformation groupUserStoreInformation = new GroupUserStoreInformation(USERSTORE_NAME, USERSTORE_DOMAIN, USERSTORE_DOMAIN + ':' + USERSTORE_NAME);
         final GroupInformation groupInformation = new GroupInformation(groupUserStoreInformation, Collections.singleton("ceo"));
         final UserInformation userInformation = new UserInformation(USER_UUID, userAuthenticationInformation, Collections.singletonList(account), Collections.singletonList(groupInformation));
 
         return new CombinedTokenInformation(UUID.randomUUID(), applicationInformation, userStoreInformation, userInformation);
+    }
+
+    private <E extends EntityType, T extends TokenType> AuthenticationToken<E, T> mockToken(final E entityType, final T tokenType) {
+        return new AuthenticationToken<>(
+                entityType,
+                tokenType,
+                DateTime.now().plus(Hours.TWO),
+                "token-id-" + UUID.randomUUID().toString(),
+                "token-secret-" + UUID.randomUUID().toString(),
+                DateTime.now().plus(Hours.ONE)
+        );
+    }
+
+    private List<ApplicationAndUsers> mockApplicationAndUsersList(final TokenType supportedTokenType) {
+        final List<ApplicationAndUsers.User> users = Arrays.asList(
+                new ApplicationAndUsers.User(USERSTORE_NAME, USERSTORE_DOMAIN, null),
+                new ApplicationAndUsers.User("Wrong Userstore 1", "Wrong Userstore Domain 1", null)
+        );
+
+        final ApplicationAndUsers.User wrongUser = new ApplicationAndUsers.User("Wrong Userstore 2", "Wrong Userstore Domain 2", null);
+
+        return Arrays.asList(
+                new ApplicationAndUsers(APPLICATION_NAME, APPLICATION_DOMAIN, null, null, Collections.singletonList(supportedTokenType.getName()), users),
+                new ApplicationAndUsers("Wrong App", "Wrong Domain", null, null, Collections.singletonList(TokenType.Simple.INSTANCE.getName()), Collections.singletonList(wrongUser))
+        );
+    }
+
+    private HodErrorException mockFatalDatabaseException() {
+        final HodError hodError = new HodError.Builder()
+                .setErrorCode(HodErrorCode.FATAL_DATABASE_ERROR)
+                .setDetail("Fatal database error")
+                .build();
+
+        return new HodErrorException(hodError, 500);
+    }
+
+    private HodErrorException mockAuthenticationFailedException() {
+        final HodError hodError = new HodError.Builder()
+                .setErrorCode(HodErrorCode.AUTHENTICATION_FAILED)
+                .setDetail("Authentication failed")
+                .build();
+
+        return new HodErrorException(hodError, 401);
     }
 }

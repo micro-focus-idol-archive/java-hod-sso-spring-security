@@ -6,6 +6,7 @@
 package com.hp.autonomy.hod.sso;
 
 import com.google.common.collect.ImmutableSet;
+import com.hp.autonomy.hod.client.api.authentication.ApplicationAndUsers;
 import com.hp.autonomy.hod.client.api.authentication.AuthenticationService;
 import com.hp.autonomy.hod.client.api.authentication.AuthenticationToken;
 import com.hp.autonomy.hod.client.api.authentication.EntityType;
@@ -27,9 +28,10 @@ import org.springframework.security.core.GrantedAuthority;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 /**
  * AuthenticationProvider which consumes {@link HodTokenAuthentication} and produces {@link HodAuthentication}
@@ -70,11 +72,12 @@ public class HodAuthenticationProvider implements AuthenticationProvider {
         this.tokenRepository = tokenRepository;
         this.authenticationService = authenticationService;
         this.userStoreUsersService = userStoreUsersService;
-        this.metadataTypes = metadataTypes;
         this.hodUsernameResolver = hodUsernameResolver;
         this.unboundTokenService = unboundTokenService;
         this.authoritiesResolver = authoritiesResolver;
         this.securityInfoRetriever = securityInfoRetriever;
+
+        this.metadataTypes = metadataTypes == null ? null : Collections.unmodifiableMap(metadataTypes);
     }
 
     /**
@@ -179,81 +182,83 @@ public class HodAuthenticationProvider implements AuthenticationProvider {
      */
     @Override
     public Authentication authenticate(final Authentication authentication) throws AuthenticationException {
-        final AuthenticationToken<EntityType.Combined, TokenType.Simple> combinedToken = ((HodTokenAuthentication) authentication).getCredentials();
-        final CombinedTokenInformation combinedTokenInformation;
+        final AuthenticationToken<EntityType.CombinedSso, TokenType.Simple> combinedSsoToken = ((HodTokenAuthentication) authentication).getCredentials();
+        final AuthenticationToken<EntityType.Unbound, TokenType.HmacSha1> unboundToken;
 
         try {
-            combinedTokenInformation = authenticationService.getCombinedTokenInformation(combinedToken);
+            // Get an unbound token for the application's authentication
+            unboundToken = unboundTokenService.getUnboundToken();
         } catch (final HodErrorException e) {
-            if (HodErrorCode.AUTHENTICATION_FAILED.equals(e.getErrorCode())) {
+            // If an authentication error occurs here, it is the application's fault so don't throw BadCredentialsException
+            throw new AuthenticationServiceException("HOD returned an error while authenticating", e);
+        }
+
+        final List<ApplicationAndUsers> applicationAndUsersList;
+
+        try {
+            // Determine what applications and users can be authenticated with the combined SSO and unbound tokens
+            applicationAndUsersList = authenticationService.authenticateCombinedGet(combinedSsoToken, unboundToken);
+        } catch (final HodErrorException e) {
+            if (HodErrorCode.AUTHENTICATION_FAILED == e.getErrorCode()) {
+                // The user's combined SSO token was invalid (we can assume our app token is valid)
                 throw new BadCredentialsException("HOD authentication failed", e);
             } else {
                 throw new AuthenticationServiceException("HOD returned an error while authenticating", e);
             }
         }
 
-        final UUID unboundAuthenticationUuid;
+        if (applicationAndUsersList.isEmpty()) {
+            // There are no application/user pairs matching the application and user authentication
+            throw new BadCredentialsException("HOD authentication failed");
+        }
+
+        // TODO: Allow the user to choose which application/user pair to log in as
+        // Choose the first application and user
+        final ApplicationAndUsers applicationAndUsers = applicationAndUsersList.get(0);
+        final ApplicationAndUsers.User user = applicationAndUsers.getUsers().get(0);
+
+        if (!applicationAndUsers.getSupportedTokenTypes().contains(TokenType.Simple.INSTANCE.getName())) {
+            // The HodAuthenticationProvider will try to create a simple token
+            throw new AuthenticationServiceException("Simple token type not supported by application");
+        }
+
+        final ResourceIdentifier applicationIdentifier = new ResourceIdentifier(applicationAndUsers.getDomain(), applicationAndUsers.getName());
+        final ResourceIdentifier userStore = new ResourceIdentifier(user.getDomain(), user.getUserStore());
 
         try {
-            unboundAuthenticationUuid = unboundTokenService.getAuthenticationUuid();
+            // Create a combined token
+            final AuthenticationToken<EntityType.Combined, TokenType.Simple> combinedToken = authenticationService.authenticateCombined(
+                    combinedSsoToken,
+                    unboundToken,
+                    applicationIdentifier.getDomain(),
+                    applicationIdentifier.getName(),
+                    userStore.getDomain(),
+                    userStore.getName(),
+                    TokenType.Simple.INSTANCE
+            );
+
+            final CombinedTokenInformation combinedTokenInformation = authenticationService.getCombinedTokenInformation(combinedToken);
+            final String securityInfo = retrieveSecurityInfo(combinedTokenInformation);
+            final TokenProxy<EntityType.Combined, TokenType.Simple> combinedTokenProxy = tokenRepository.insert(combinedToken);
+
+            final Map<String, Serializable> metadata = retrieveMetadata(combinedTokenProxy, combinedTokenInformation, userStore);
+            final String name = resolveUsername(metadata);
+
+            final HodAuthenticationPrincipal principal = new HodAuthenticationPrincipal(combinedTokenInformation, name, metadata, securityInfo);
+
+            // Resolve application granted authorities, adding an authority representing the HOD application
+            final Collection<GrantedAuthority> grantedAuthorities = ImmutableSet.<GrantedAuthority>builder()
+                    .addAll(authoritiesResolver.resolveAuthorities(combinedTokenProxy, combinedTokenInformation))
+                    .add(new HodApplicationGrantedAuthority(applicationIdentifier))
+                    .build();
+
+            return new HodAuthentication<>(combinedTokenProxy, grantedAuthorities, principal);
         } catch (final HodErrorException e) {
+            // The user's token has already been validated, so something else went wrong
             throw new AuthenticationServiceException("HOD returned an error while authenticating", e);
-        }
-
-        if (!unboundAuthenticationUuid.equals(combinedTokenInformation.getApplication().getAuthentication().getUuid())) {
-            // The provided combined token was not generated with our unbound token
-            throw new BadCredentialsException("Invalid combined token");
-        }
-
-        final TokenProxy<EntityType.Combined, TokenType.Simple> combinedTokenProxy;
-
-        try {
-            combinedTokenProxy = tokenRepository.insert(combinedToken);
         } catch (final IOException e) {
             throw new AuthenticationServiceException("An error occurred while authenticating", e);
         }
-
-        Map<String, Serializable> metadata = new HashMap<>();
-        String name = null;
-
-        final ResourceIdentifier userStore = combinedTokenInformation.getUserStore().getIdentifier();
-        final UUID userUuid = combinedTokenInformation.getUser().getUuid();
-
-        if (metadataTypes != null) {
-            try {
-                metadata = userStoreUsersService.getUserMetadata(combinedTokenProxy, userStore, userUuid, metadataTypes);
-
-                if (hodUsernameResolver != null) {
-                    name = hodUsernameResolver.resolve(metadata);
-                }
-            } catch (final HodErrorException e) {
-                throw new AuthenticationServiceException("HOD returned an error while authenticating", e);
-            }
-        }
-
-        String securityInfo = null;
-
-        if (securityInfoRetriever != null) {
-            try {
-                securityInfo = securityInfoRetriever.getSecurityInfo(combinedTokenInformation.getUser());
-            } catch (final Exception e) {
-                throw new AuthenticationServiceException("There was an error while authenticating", e);
-            }
-            if (securityInfo == null) {
-                throw new AuthenticationServiceException("There was an error while authenticating");
-            }
-        }
-
-        final HodAuthenticationPrincipal principal = new HodAuthenticationPrincipal(combinedTokenInformation, name, metadata, securityInfo);
-        final ResourceIdentifier applicationIdentifier = combinedTokenInformation.getApplication().getIdentifier();
-
-        // Resolve application granted authorities, adding an authority representing the HOD application
-        final Collection<GrantedAuthority> grantedAuthorities = ImmutableSet.<GrantedAuthority>builder()
-                .addAll(authoritiesResolver.resolveAuthorities(combinedTokenProxy, combinedTokenInformation))
-                .add(new HodApplicationGrantedAuthority(applicationIdentifier))
-                .build();
-
-        return new HodAuthentication<>(combinedTokenProxy, grantedAuthorities, principal);
     }
 
     /**
@@ -264,5 +269,39 @@ public class HodAuthenticationProvider implements AuthenticationProvider {
     @Override
     public boolean supports(final Class<?> authenticationClass) {
         return HodTokenAuthentication.class.isAssignableFrom(authenticationClass);
+    }
+
+    private String retrieveSecurityInfo(final CombinedTokenInformation combinedTokenInformation) {
+        final String securityInfo;
+
+        if (securityInfoRetriever == null) {
+            securityInfo = null;
+        } else {
+            try {
+                securityInfo = securityInfoRetriever.getSecurityInfo(combinedTokenInformation.getUser());
+            } catch (final RuntimeException e) {
+                throw new AuthenticationServiceException("Could not retrieve security info", e);
+            }
+
+            if (null == securityInfo) {
+                throw new AuthenticationServiceException("Could not retrieve security info");
+            }
+        }
+
+        return securityInfo;
+    }
+
+    private Map<String, Serializable> retrieveMetadata(
+            final TokenProxy<EntityType.Combined, TokenType.Simple> combinedTokenProxy,
+            final CombinedTokenInformation combinedTokenInformation,
+            final ResourceIdentifier userStore
+    ) throws HodErrorException {
+        return metadataTypes == null ?
+                new HashMap<String, Serializable>() :
+                userStoreUsersService.getUserMetadata(combinedTokenProxy, userStore, combinedTokenInformation.getUser().getUuid(), metadataTypes);
+    }
+
+    private String resolveUsername(final Map<String, Serializable> metadata) {
+        return hodUsernameResolver == null ? null : hodUsernameResolver.resolve(metadata);
     }
 }
