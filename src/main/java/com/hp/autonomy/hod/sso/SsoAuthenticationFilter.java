@@ -37,13 +37,11 @@ public class SsoAuthenticationFilter extends AbstractAuthenticationProcessingFil
         }
 
         final DateTime expiry;
-        final DateTime startRefresh;
 
         try {
             expiry = new DateTime(Long.parseLong(request.getParameter("expiry")));
-            startRefresh = new DateTime(Long.parseLong(request.getParameter("startRefresh")));
         } catch (final NumberFormatException e) {
-            throw new BadCredentialsException("Invalid user unbound token");
+            throw new BadCredentialsException("Invalid combined SSO token");
         }
 
         final AuthenticationToken<EntityType.CombinedSso, TokenType.Simple> token = new AuthenticationToken<>(
@@ -53,7 +51,7 @@ public class SsoAuthenticationFilter extends AbstractAuthenticationProcessingFil
             expiry,
             request.getParameter("id"),
             request.getParameter("secret"),
-            startRefresh
+            null
         );
 
         return getAuthenticationManager().authenticate(new HodTokenAuthentication(token));

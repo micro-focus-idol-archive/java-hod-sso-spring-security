@@ -49,7 +49,6 @@ public class SsoAuthenticationFilterTest {
 
         final HttpServletRequest request = mock(HttpServletRequest.class);
         when(request.getParameter("expiry")).thenReturn("1475037954");
-        when(request.getParameter("startRefresh")).thenReturn("1475036954");
         when(request.getParameter("type")).thenReturn("CMB_SSO:SIMPLE");
         when(request.getParameter("id")).thenReturn("id-" + UUID.randomUUID().toString());
         when(request.getParameter("secret")).thenReturn("secret-" + UUID.randomUUID().toString());
