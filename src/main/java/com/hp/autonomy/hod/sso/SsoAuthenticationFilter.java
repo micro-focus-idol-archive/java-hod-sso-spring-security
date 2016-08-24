@@ -8,7 +8,9 @@ package com.hp.autonomy.hod.sso;
 import com.hp.autonomy.hod.client.api.authentication.AuthenticationToken;
 import com.hp.autonomy.hod.client.api.authentication.EntityType;
 import com.hp.autonomy.hod.client.api.authentication.TokenType;
+import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
+import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -30,6 +32,10 @@ public class SsoAuthenticationFilter extends AbstractAuthenticationProcessingFil
 
     @Override
     public Authentication attemptAuthentication(final HttpServletRequest request, final HttpServletResponse response) throws AuthenticationException, IOException, ServletException {
+        if (!StringUtils.isEmpty(request.getParameter("error"))) {
+            throw new AuthenticationServiceException("The SSO page returned an error");
+        }
+
         final DateTime expiry;
         final DateTime startRefresh;
 
