@@ -11,16 +11,16 @@ import com.hp.autonomy.hod.client.api.authentication.TokenType;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 
 /**
- * An Authentication representing an unverified HP Haven OnDemand combined token.
+ * An Authentication representing an unverified HP Haven OnDemand combined SSO token.
  *
  * This authentication is never authenticated.
  */
 public class HodTokenAuthentication extends AbstractAuthenticationToken {
     private static final long serialVersionUID = -643920242131375593L;
 
-    private AuthenticationToken<EntityType.Combined, TokenType.Simple> token;
+    private AuthenticationToken<EntityType.CombinedSso, TokenType.Simple> token;
 
-    public HodTokenAuthentication(final AuthenticationToken<EntityType.Combined, TokenType.Simple> token) {
+    public HodTokenAuthentication(final AuthenticationToken<EntityType.CombinedSso, TokenType.Simple> token) {
         super(null);
         super.setAuthenticated(false);
         this.token = token;
@@ -30,7 +30,7 @@ public class HodTokenAuthentication extends AbstractAuthenticationToken {
      * @return The HP Haven OnDemand combined token
      */
     @Override
-    public AuthenticationToken<EntityType.Combined, TokenType.Simple> getCredentials() {
+    public AuthenticationToken<EntityType.CombinedSso, TokenType.Simple> getCredentials() {
         return token;
     }
 

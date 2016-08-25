@@ -12,7 +12,7 @@
 
     <groupId>com.hp.autonomy.hod</groupId>
     <artifactId>hod-sso-spring-security</artifactId>
-    <version>0.7.0</version>
+    <version>0.7.1</version>
 
     <name>HP Haven OnDemand SSO Spring Security</name>
     <description>Library to assist with using HP Haven OnDemand SSO with Spring Security</description>
@@ -86,7 +86,7 @@
         <dependency>
             <groupId>com.hp.autonomy.hod</groupId>
             <artifactId>java-hod-client</artifactId>
-            <version>0.21.1</version>
+            <version>0.21.2</version>
         </dependency>
         <dependency>
             <groupId>com.google.guava</groupId>

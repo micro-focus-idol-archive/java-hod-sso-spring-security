@@ -16,22 +16,11 @@ import java.net.URL;
 public interface HodAuthenticationRequestService {
 
     /**
-     * Generates a signed list applications request
-     * @return A signed request which when sent to HP Haven OnDemand will return a list of applications
-     * @throws HodErrorException If an error occurs communicating with HPE Haven OnDemand
+     * Generate a signed authenticate combined PATCH request. This can be used in the browser to create a combined SSO token.
+     * @return A signed request to make from the user's browser
+     * @throws HodErrorException If an error occurs authenticating with HPE Haven OnDemand
      */
-    SignedRequest getListApplicationRequest() throws HodErrorException;
-
-    /**
-     * Generates a signed combined token request
-     * @param domain The HP Haven OnDemand domain to authenticate against
-     * @param application The HP Haven OnDemand domain to authenticate against
-     * @param userStoreDomain The HP Haven OnDemand user store domain to authenticate against
-     * @param userStoreName The HP Haven OnDemand user store to authenticate against
-     * @return A signed request which when sent to HP Haven OnDemand will return a combined token
-     * @throws HodErrorException If an error occurs communicating with HPE Haven OnDemand
-     */
-    SignedRequest getCombinedRequest(String domain, String application, String userStoreDomain, String userStoreName) throws HodErrorException;
+    SignedRequest getCombinedPatchRequest() throws HodErrorException;
 
     /**
      * Generate a signed authenticate combined PATCH request to be sent from the SSO page.
@@ -40,6 +29,6 @@ public interface HodAuthenticationRequestService {
      * @throws HodErrorException If an error occurs communicating with HPE Haven OnDemand
      * @throws InvalidOriginException If the redirect URL is not in the allowed origins
      */
-    SignedRequest getCombinedPatchRequest(URL redirectUrl) throws HodErrorException, InvalidOriginException;
+    SignedRequest getSsoPageCombinedPatchRequest(URL redirectUrl) throws HodErrorException, InvalidOriginException;
 
 }
