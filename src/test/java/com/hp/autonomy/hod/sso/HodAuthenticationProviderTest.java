@@ -5,6 +5,7 @@
 
 package com.hp.autonomy.hod.sso;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.hp.autonomy.hod.client.api.authentication.ApplicationAndUsers;
@@ -235,9 +236,13 @@ public class HodAuthenticationProviderTest {
 
     @Test
     public void authenticatesWithUsernameResolver() throws HodErrorException {
-        final ImmutableMap<String, Class<? extends Serializable>> metadataTypes = ImmutableMap.<String, Class<? extends Serializable>>builder()
-                .put("username", String.class)
-                .put("manager", String.class)
+        final Map<String, JsonNode> hodMetadata = ImmutableMap.<String, JsonNode>builder()
+                .put("username", mock(JsonNode.class))
+                .put("manager", mock(JsonNode.class))
+                .build();
+        final Map<String, Serializable> outputMetadata = ImmutableMap.<String, Serializable>builder()
+                .put("username", "fred")
+                .put("manager", "penny")
                 .build();
 
         final AuthenticationProvider provider = new HodAuthenticationProvider(
@@ -246,22 +251,16 @@ public class HodAuthenticationProviderTest {
                 authenticationService,
                 unboundTokenService,
                 userStoreUsersService,
-                metadataTypes,
-                new HodUsernameResolver() {
+                new HodUserMetadataResolver() {
                     @Override
-                    public String resolve(final Map<String, Serializable> metadata) {
-                        return (String) metadata.get("username");
+                    public HodUserMetadata resolve(final Map<String, JsonNode> metadata) {
+                        return new HodUserMetadata("fred", outputMetadata);
                     }
                 }
         );
 
-        final Map<String, Serializable> metadata = ImmutableMap.<String, Serializable>builder()
-                .put("username", "fred")
-                .put("manager", "penny")
-                .build();
-
-        when(userStoreUsersService.getUserMetadata(tokenProxy, new ResourceIdentifier(USERSTORE_DOMAIN, USERSTORE_NAME), USER_UUID, metadataTypes))
-                .thenReturn(metadata);
+        when(userStoreUsersService.getUserMetadata(tokenProxy, new ResourceIdentifier(USERSTORE_DOMAIN, USERSTORE_NAME), USER_UUID))
+                .thenReturn(hodMetadata);
 
         final Authentication authentication = provider.authenticate(new HodTokenAuthentication(combinedSsoToken));
         assertThat(authentication.getName(), is("fred"));

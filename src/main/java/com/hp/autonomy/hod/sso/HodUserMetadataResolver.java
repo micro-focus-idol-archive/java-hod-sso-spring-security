@@ -5,19 +5,21 @@
 
 package com.hp.autonomy.hod.sso;
 
-import java.io.Serializable;
+import com.fasterxml.jackson.databind.JsonNode;
+
 import java.util.Map;
 
 /**
  * Strategy interface for resolving a username from a map of HOD user metadata.
  */
-public interface HodUsernameResolver {
+@SuppressWarnings("WeakerAccess")
+public interface HodUserMetadataResolver {
 
     /**
      * Resolve the username from a map of HOD user metadata
-     * @param metadata The user's metadata
+     * @param unparsedMetadata The user's metadata
      * @return The username or null if there isn't one
      */
-    String resolve(Map<String, Serializable> metadata);
+    HodUserMetadata resolve(Map<String, JsonNode> unparsedMetadata);
 
 }
