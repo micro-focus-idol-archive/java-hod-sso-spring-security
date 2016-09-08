@@ -29,9 +29,7 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * AuthenticationProvider which consumes {@link HodTokenAuthentication} and produces {@link HodAuthentication}
@@ -41,8 +39,7 @@ public class HodAuthenticationProvider implements AuthenticationProvider {
     private final TokenRepository tokenRepository;
     private final AuthenticationService authenticationService;
     private final UserStoreUsersService userStoreUsersService;
-    private final Map<String, Class<? extends Serializable>> metadataTypes;
-    private final HodUsernameResolver hodUsernameResolver;
+    private final HodUserMetadataResolver hodUserMetadataResolver;
     private final UnboundTokenService<TokenType.HmacSha1> unboundTokenService;
     private final SecurityInfoRetriever securityInfoRetriever;
 
@@ -51,13 +48,13 @@ public class HodAuthenticationProvider implements AuthenticationProvider {
      * the combined token has the privilege for the Get User Metadata API on their user store. Uses the given username
      * resolver to set the name for a user's {@link HodAuthenticationPrincipal}. The GrantedAuthoritiesResolver is used
      * to create a collection of authorities for an authenticated user.
-     * @param tokenRepository       The token repository in which to store the HP Haven OnDemand Token
-     * @param authoritiesResolver   Resolves authorities for authenticated users
-     * @param authenticationService The authentication service that will perform the authentication
-     * @param unboundTokenService   The unbound token service to get the unbound authentication UUID from
-     * @param userStoreUsersService The user store users service that will get user metadata
-     * @param metadataTypes         Metadata keys and types to retrieve and incorporate into the HodAuthentication principal
-     * @param hodUsernameResolver   The strategy to extract usernames from users' metadata
+     *
+     * @param tokenRepository         The token repository in which to store the HP Haven OnDemand Token
+     * @param authoritiesResolver     Resolves authorities for authenticated users
+     * @param authenticationService   The authentication service that will perform the authentication
+     * @param unboundTokenService     The unbound token service to get the unbound authentication UUID from
+     * @param userStoreUsersService   The user store users service that will get user metadata
+     * @param hodUserMetadataResolver The strategy to resolve users' metadata
      */
     public HodAuthenticationProvider(
             final TokenRepository tokenRepository,
@@ -65,24 +62,22 @@ public class HodAuthenticationProvider implements AuthenticationProvider {
             final AuthenticationService authenticationService,
             final UnboundTokenService<TokenType.HmacSha1> unboundTokenService,
             final UserStoreUsersService userStoreUsersService,
-            final Map<String, Class<? extends Serializable>> metadataTypes,
-            final HodUsernameResolver hodUsernameResolver,
+            final HodUserMetadataResolver hodUserMetadataResolver,
             final SecurityInfoRetriever securityInfoRetriever
     ) {
         this.tokenRepository = tokenRepository;
         this.authenticationService = authenticationService;
         this.userStoreUsersService = userStoreUsersService;
-        this.hodUsernameResolver = hodUsernameResolver;
+        this.hodUserMetadataResolver = hodUserMetadataResolver;
         this.unboundTokenService = unboundTokenService;
         this.authoritiesResolver = authoritiesResolver;
         this.securityInfoRetriever = securityInfoRetriever;
-
-        this.metadataTypes = metadataTypes == null ? null : Collections.unmodifiableMap(metadataTypes);
     }
 
     /**
      * Creates a new HodAuthenticationProvider which doesn't fetch user metadata. The GrantedAuthoritiesResolver is used
      * to create a collection of authorities for an authenticated user.
+     *
      * @param tokenRepository       The token repository in which to store the HP Haven OnDemand Token
      * @param authoritiesResolver   Resolves authorities for authenticated users
      * @param authenticationService The authentication service that will perform the authentication
@@ -94,7 +89,7 @@ public class HodAuthenticationProvider implements AuthenticationProvider {
             final AuthenticationService authenticationService,
             final UnboundTokenService<TokenType.HmacSha1> unboundTokenService
     ) {
-        this(tokenRepository, authoritiesResolver, authenticationService, unboundTokenService, null, null, null, null);
+        this(tokenRepository, authoritiesResolver, authenticationService, unboundTokenService, null, null, null);
     }
 
     /**
@@ -102,13 +97,13 @@ public class HodAuthenticationProvider implements AuthenticationProvider {
      * the combined token has the privilege for the Get User Metadata API on their user store. Uses the given username
      * resolver to set the name for a user's {@link HodAuthenticationPrincipal}. The role is given to every user as a
      * granted authority.
-     * @param tokenRepository       The token repository in which to store the HP Haven OnDemand Token
-     * @param role                  The role to assign to users authenticated with HP Haven OnDemand SSO
-     * @param authenticationService The authentication service that will perform the authentication
-     * @param unboundTokenService   The unbound token service to get the unbound authentication UUID from
-     * @param userStoreUsersService The user store users service that will get user metadata
-     * @param metadataTypes         Metadata keys and types to retrieve and incorporate into the HodAuthentication principal
-     * @param hodUsernameResolver   The strategy to extract usernames from users' metadata
+     *
+     * @param tokenRepository         The token repository in which to store the HP Haven OnDemand Token
+     * @param role                    The role to assign to users authenticated with HP Haven OnDemand SSO
+     * @param authenticationService   The authentication service that will perform the authentication
+     * @param unboundTokenService     The unbound token service to get the unbound authentication UUID from
+     * @param userStoreUsersService   The user store users service that will get user metadata
+     * @param hodUserMetadataResolver The strategy to resolve users' metadata
      */
     public HodAuthenticationProvider(
             final TokenRepository tokenRepository,
@@ -116,10 +111,9 @@ public class HodAuthenticationProvider implements AuthenticationProvider {
             final AuthenticationService authenticationService,
             final UnboundTokenService<TokenType.HmacSha1> unboundTokenService,
             final UserStoreUsersService userStoreUsersService,
-            final Map<String, Class<? extends Serializable>> metadataTypes,
-            final HodUsernameResolver hodUsernameResolver
+            final HodUserMetadataResolver hodUserMetadataResolver
     ) {
-        this(tokenRepository, new ConstantAuthoritiesResolver(role), authenticationService, unboundTokenService, userStoreUsersService, metadataTypes, hodUsernameResolver, null);
+        this(tokenRepository, new ConstantAuthoritiesResolver(role), authenticationService, unboundTokenService, userStoreUsersService, hodUserMetadataResolver, null);
     }
 
     public HodAuthenticationProvider(
@@ -128,38 +122,37 @@ public class HodAuthenticationProvider implements AuthenticationProvider {
             final AuthenticationService authenticationService,
             final UnboundTokenService<TokenType.HmacSha1> unboundTokenService,
             final UserStoreUsersService userStoreUsersService,
-            final Map<String, Class<? extends Serializable>> metadataTypes,
-            final HodUsernameResolver hodUsernameResolver,
+            final HodUserMetadataResolver hodUserMetadataResolver,
             final SecurityInfoRetriever securityInfoRetriever
     ) {
-        this(tokenRepository, new ConstantAuthoritiesResolver(role), authenticationService, unboundTokenService, userStoreUsersService, metadataTypes, hodUsernameResolver, securityInfoRetriever);
+        this(tokenRepository, new ConstantAuthoritiesResolver(role), authenticationService, unboundTokenService, userStoreUsersService, hodUserMetadataResolver, securityInfoRetriever);
     }
 
     /**
      * Creates a new HodAuthenticationProvider which fetches the given user metadata keys. Note: this will only work if
      * the combined token has the privilege for the Get User Metadata API on their user store. The role is given to every
      * user as a granted authority.
+     *
      * @param tokenRepository       The token repository in which to store the HP Haven OnDemand Token
      * @param role                  The role to assign to users authenticated with HP Haven OnDemand SSO
      * @param authenticationService The authentication service that will perform the authentication
      * @param unboundTokenService   The unbound token service to get the unbound authentication UUID from
      * @param userStoreUsersService The user store users service that will get user metadata
-     * @param metadataTypes         Metadata keys and types to retrieve and incorporate into the HodAuthentication principal
      */
     public HodAuthenticationProvider(
             final TokenRepository tokenRepository,
             final String role,
             final AuthenticationService authenticationService,
             final UnboundTokenService<TokenType.HmacSha1> unboundTokenService,
-            final UserStoreUsersService userStoreUsersService,
-            final Map<String, Class<? extends Serializable>> metadataTypes
+            final UserStoreUsersService userStoreUsersService
     ) {
-        this(tokenRepository, role, authenticationService, unboundTokenService, userStoreUsersService, metadataTypes, null, null);
+        this(tokenRepository, role, authenticationService, unboundTokenService, userStoreUsersService, null, null);
     }
 
     /**
      * Creates a new HodAuthenticationProvider which doesn't fetch user metadata. The role is given to every user as a
      * granted authority.
+     *
      * @param tokenRepository       The token repository in which to store the HP Haven OnDemand Token
      * @param role                  The role to assign to users authenticated with HP Haven OnDemand SSO
      * @param authenticationService The authentication service that will perform the authentication
@@ -171,11 +164,12 @@ public class HodAuthenticationProvider implements AuthenticationProvider {
             final AuthenticationService authenticationService,
             final UnboundTokenService<TokenType.HmacSha1> unboundTokenService
     ) {
-        this(tokenRepository, role, authenticationService, unboundTokenService, null, null, null, null);
+        this(tokenRepository, role, authenticationService, unboundTokenService, null, null, null);
     }
 
     /**
      * Authenticates the given authentication
+     *
      * @param authentication The authentication to authenticate. This should be a HodTokenAuthentication
      * @return A HodAuthentication based on the given HodTokenAuthentication
      * @throws AuthenticationException if authentication fails
@@ -241,10 +235,9 @@ public class HodAuthenticationProvider implements AuthenticationProvider {
             final String securityInfo = retrieveSecurityInfo(combinedTokenInformation);
             final TokenProxy<EntityType.Combined, TokenType.Simple> combinedTokenProxy = tokenRepository.insert(combinedToken);
 
-            final Map<String, Serializable> metadata = retrieveMetadata(combinedTokenProxy, combinedTokenInformation, userStore);
-            final String name = resolveUsername(metadata);
+            final HodUserMetadata metadata = retrieveMetadata(combinedTokenProxy, combinedTokenInformation, userStore);
 
-            final HodAuthenticationPrincipal principal = new HodAuthenticationPrincipal(combinedTokenInformation, name, metadata, securityInfo);
+            final HodAuthenticationPrincipal principal = new HodAuthenticationPrincipal(combinedTokenInformation, metadata.getUserDisplayName(), metadata.getMetadata(), securityInfo);
 
             // Resolve application granted authorities, adding an authority representing the HOD application
             final Collection<GrantedAuthority> grantedAuthorities = ImmutableSet.<GrantedAuthority>builder()
@@ -263,6 +256,7 @@ public class HodAuthenticationProvider implements AuthenticationProvider {
 
     /**
      * Test if the authentication provider supports a particular authentication class
+     *
      * @param authenticationClass The class to test
      * @return True is the class is assignable from HodTokenAuthentication; false otherwise
      */
@@ -291,17 +285,13 @@ public class HodAuthenticationProvider implements AuthenticationProvider {
         return securityInfo;
     }
 
-    private Map<String, Serializable> retrieveMetadata(
+    private HodUserMetadata retrieveMetadata (
             final TokenProxy<EntityType.Combined, TokenType.Simple> combinedTokenProxy,
             final CombinedTokenInformation combinedTokenInformation,
             final ResourceIdentifier userStore
     ) throws HodErrorException {
-        return metadataTypes == null ?
-                new HashMap<String, Serializable>() :
-                userStoreUsersService.getUserMetadata(combinedTokenProxy, userStore, combinedTokenInformation.getUser().getUuid(), metadataTypes);
-    }
-
-    private String resolveUsername(final Map<String, Serializable> metadata) {
-        return hodUsernameResolver == null ? null : hodUsernameResolver.resolve(metadata);
+        return userStoreUsersService == null ?
+                new HodUserMetadata("", Collections.<String, Serializable>emptyMap()) :
+                hodUserMetadataResolver.resolve(userStoreUsersService.getUserMetadata(combinedTokenProxy, userStore, combinedTokenInformation.getUser().getUuid()));
     }
 }
