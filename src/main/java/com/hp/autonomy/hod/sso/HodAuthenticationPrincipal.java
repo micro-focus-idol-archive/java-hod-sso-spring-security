@@ -58,7 +58,7 @@ public class HodAuthenticationPrincipal implements Principal, Serializable {
         this.name = StringUtils.defaultString(name);
         this.securityInfo = securityInfo;
 
-        this.userMetadata = userMetadata == null ? new HashMap<String, Serializable>() : userMetadata;
+        this.userMetadata = userMetadata == null ? new HashMap<>() : userMetadata;
     }
 
     public HodAuthenticationPrincipal(final CombinedTokenInformation tokenInformation, final String name, final Map<String, Serializable> userMetadata) {

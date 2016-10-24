@@ -55,6 +55,7 @@ public class HodAuthenticationProvider implements AuthenticationProvider {
      * @param unboundTokenService     The unbound token service to get the unbound authentication UUID from
      * @param userStoreUsersService   The user store users service that will get user metadata
      * @param hodUserMetadataResolver The strategy to resolve users' metadata
+     * @param securityInfoRetriever   Retrieves the securityInfoString for a given user
      */
     public HodAuthenticationProvider(
             final TokenRepository tokenRepository,

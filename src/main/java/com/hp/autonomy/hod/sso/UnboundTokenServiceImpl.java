@@ -22,7 +22,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Default implementation of UnboundTokenService. This implementation will cache the unbound token until it expires.
- * <p/>
  * This class is thread safe.
  */
 public class UnboundTokenServiceImpl implements UnboundTokenService<TokenType.HmacSha1> {
@@ -39,6 +38,7 @@ public class UnboundTokenServiceImpl implements UnboundTokenService<TokenType.Hm
      * Creates a new UnboundTokenServiceImpl, fetching the authentication UUID and an unbound token from Haven OnDemand.
      * @param authenticationService The authentication service to use to require the unbound token
      * @param configService         The service used to obtain the configuration
+     * @throws HodErrorException    If a problem occurs
      */
     public UnboundTokenServiceImpl(
             final AuthenticationService authenticationService,

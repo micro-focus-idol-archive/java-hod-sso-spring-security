@@ -214,15 +214,10 @@ public class HodAuthenticationProviderTest {
 
     @Test
     public void authenticatesWithAuthoritiesResolver() throws HodErrorException {
-        final GrantedAuthoritiesResolver resolver = new GrantedAuthoritiesResolver() {
-            @Override
-            public Collection<GrantedAuthority> resolveAuthorities(final TokenProxy<EntityType.Combined, TokenType.Simple> tokenProxy, final CombinedTokenInformation combinedTokenInformation) {
-                return ImmutableList.<GrantedAuthority>builder()
-                        .add(new SimpleGrantedAuthority("ROLE_1"))
-                        .add(new SimpleGrantedAuthority("ROLE_2"))
-                        .build();
-            }
-        };
+        final GrantedAuthoritiesResolver resolver = (tokenProxy1, combinedTokenInformation) -> ImmutableList.<GrantedAuthority>builder()
+                .add(new SimpleGrantedAuthority("ROLE_1"))
+                .add(new SimpleGrantedAuthority("ROLE_2"))
+                .build();
 
         final AuthenticationProvider provider = new HodAuthenticationProvider(tokenRepository, resolver, authenticationService, unboundTokenService);
         final Authentication authentication = provider.authenticate(new HodTokenAuthentication(combinedSsoToken));
@@ -251,12 +246,7 @@ public class HodAuthenticationProviderTest {
                 authenticationService,
                 unboundTokenService,
                 userStoreUsersService,
-                new HodUserMetadataResolver() {
-                    @Override
-                    public HodUserMetadata resolve(final Map<String, JsonNode> metadata) {
-                        return new HodUserMetadata("fred", outputMetadata);
-                    }
-                }
+                metadata -> new HodUserMetadata("fred", outputMetadata)
         );
 
         when(userStoreUsersService.getUserMetadata(tokenProxy, new ResourceIdentifier(USERSTORE_DOMAIN, USERSTORE_NAME), USER_UUID))

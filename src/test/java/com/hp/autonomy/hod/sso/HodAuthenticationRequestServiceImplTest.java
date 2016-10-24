@@ -30,7 +30,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class HodAuthenticationRequestServiceImplTest {
-    private static final AuthenticationToken<EntityType.Unbound, TokenType.HmacSha1> AUTHENTICATION_TOKEN = new AuthenticationToken<EntityType.Unbound, TokenType.HmacSha1>(
+    private static final AuthenticationToken<EntityType.Unbound, TokenType.HmacSha1> AUTHENTICATION_TOKEN = new AuthenticationToken<>(
             EntityType.Unbound.INSTANCE,
             TokenType.HmacSha1.INSTANCE,
             DateTime.now(),
@@ -53,7 +53,7 @@ public class HodAuthenticationRequestServiceImplTest {
         when(config.getAllowedOrigins()).thenReturn(ALLOWED_ORIGINS);
         when(config.getSsoUrl()).thenReturn(new URL("https://dev.havenondemand.com/sso.html"));
 
-        final ConfigService<? extends HodSsoConfig> configService = mock(ConfigService.class);
+        final ConfigService<HodSsoConfig> configService = mock(ConfigService.class);
         when(configService.getConfig()).thenReturn(config);
 
         authenticationService = mock(AuthenticationService.class);
