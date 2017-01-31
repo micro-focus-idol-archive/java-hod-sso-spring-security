@@ -18,10 +18,9 @@ import com.hp.autonomy.hod.client.api.authentication.tokeninformation.Applicatio
 import com.hp.autonomy.hod.client.api.authentication.tokeninformation.AuthenticationInformation;
 import com.hp.autonomy.hod.client.api.authentication.tokeninformation.CombinedTokenInformation;
 import com.hp.autonomy.hod.client.api.authentication.tokeninformation.GroupInformation;
-import com.hp.autonomy.hod.client.api.authentication.tokeninformation.GroupUserStoreInformation;
 import com.hp.autonomy.hod.client.api.authentication.tokeninformation.UserInformation;
-import com.hp.autonomy.hod.client.api.authentication.tokeninformation.UserStoreInformation;
-import com.hp.autonomy.hod.client.api.resource.ResourceIdentifier;
+import com.hp.autonomy.hod.client.api.resource.Resource;
+import com.hp.autonomy.hod.client.api.resource.ResourceName;
 import com.hp.autonomy.hod.client.api.userstore.user.Account;
 import com.hp.autonomy.hod.client.api.userstore.user.UserStoreUsersService;
 import com.hp.autonomy.hod.client.error.HodError;
@@ -144,7 +143,7 @@ public class HodAuthenticationProviderTest {
 
     @Test(expected = BadCredentialsException.class)
     public void failsAuthenticationIfNoApplications() throws HodErrorException {
-        when(authenticationService.authenticateCombinedGet(combinedSsoToken, unboundToken)).thenReturn(Collections.<ApplicationAndUsers>emptyList());
+        when(authenticationService.authenticateCombinedGet(combinedSsoToken, unboundToken)).thenReturn(Collections.emptyList());
 
         createSimpleProvider().authenticate(new HodTokenAuthentication(combinedSsoToken));
     }
@@ -208,7 +207,7 @@ public class HodAuthenticationProviderTest {
 
         assertThat(authorities, containsInAnyOrder(
                 new SimpleGrantedAuthority(USER_ROLE),
-                new HodApplicationGrantedAuthority(new ResourceIdentifier(APPLICATION_DOMAIN, APPLICATION_NAME))
+                new HodApplicationGrantedAuthority(new ResourceName(APPLICATION_DOMAIN, APPLICATION_NAME))
         ));
     }
 
@@ -225,7 +224,7 @@ public class HodAuthenticationProviderTest {
         assertThat(authentication.getAuthorities(), containsInAnyOrder(
                 new SimpleGrantedAuthority("ROLE_1"),
                 new SimpleGrantedAuthority("ROLE_2"),
-                new HodApplicationGrantedAuthority(new ResourceIdentifier(APPLICATION_DOMAIN, APPLICATION_NAME))
+                new HodApplicationGrantedAuthority(new ResourceName(APPLICATION_DOMAIN, APPLICATION_NAME))
         ));
     }
 
@@ -249,7 +248,7 @@ public class HodAuthenticationProviderTest {
                 metadata -> new HodUserMetadata("fred", outputMetadata)
         );
 
-        when(userStoreUsersService.getUserMetadata(tokenProxy, new ResourceIdentifier(USERSTORE_DOMAIN, USERSTORE_NAME), USER_UUID))
+        when(userStoreUsersService.getUserMetadata(tokenProxy, new ResourceName(USERSTORE_DOMAIN, USERSTORE_NAME), USER_UUID))
                 .thenReturn(hodMetadata);
 
         final Authentication authentication = provider.authenticate(new HodTokenAuthentication(combinedSsoToken));
@@ -265,13 +264,13 @@ public class HodAuthenticationProviderTest {
         final AuthenticationInformation userAuthenticationInformation = new AuthenticationInformation(UUID.randomUUID(), AuthenticationType.LEGACY_API_KEY);
 
         final ApplicationInformation applicationInformation = new ApplicationInformation(APPLICATION_NAME, APPLICATION_DOMAIN, applicationAuthenticationInformation);
-        final UserStoreInformation userStoreInformation = new UserStoreInformation(UUID.randomUUID(), USERSTORE_NAME, USERSTORE_DOMAIN);
+        final Resource userStore = Resource.builder().uuid(UUID.randomUUID()).name(USERSTORE_NAME).domain(USERSTORE_DOMAIN).build();
         final Account account = new Account(Account.Type.EMAIL, "meg.whitman@hpe.com", Account.Status.CONFIRMED, true);
-        final GroupUserStoreInformation groupUserStoreInformation = new GroupUserStoreInformation(USERSTORE_NAME, USERSTORE_DOMAIN, USERSTORE_DOMAIN + ':' + USERSTORE_NAME);
-        final GroupInformation groupInformation = new GroupInformation(groupUserStoreInformation, Collections.singleton("ceo"));
+        final Resource groupUserStore = Resource.builder().uuid(UUID.randomUUID()).name(USERSTORE_NAME).domain(USERSTORE_DOMAIN).build();
+        final GroupInformation groupInformation = new GroupInformation(groupUserStore, Collections.singleton("ceo"));
         final UserInformation userInformation = new UserInformation(USER_UUID, userAuthenticationInformation, Collections.singletonList(account), Collections.singletonList(groupInformation));
 
-        return new CombinedTokenInformation(UUID.randomUUID(), applicationInformation, userStoreInformation, userInformation);
+        return new CombinedTokenInformation(UUID.randomUUID(), applicationInformation, userStore, userInformation);
     }
 
     private <E extends EntityType, T extends TokenType> AuthenticationToken<E, T> mockToken(final E entityType, final T tokenType) {

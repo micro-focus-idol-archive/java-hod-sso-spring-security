@@ -10,14 +10,14 @@ import com.hp.autonomy.hod.client.api.authentication.AuthenticationType;
 import com.hp.autonomy.hod.client.api.authentication.EntityType;
 import com.hp.autonomy.hod.client.api.authentication.TokenType;
 import com.hp.autonomy.hod.client.api.authentication.tokeninformation.AuthenticationInformation;
-import com.hp.autonomy.hod.client.api.authentication.tokeninformation.UserStoreInformation;
-import com.hp.autonomy.hod.client.api.resource.ResourceIdentifier;
+import com.hp.autonomy.hod.client.api.resource.Resource;
+import com.hp.autonomy.hod.client.api.resource.ResourceName;
 import com.hp.autonomy.hod.client.token.TokenProxy;
 import com.hp.autonomy.hod.client.token.TokenRepository;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
-import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.Authentication;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -85,8 +85,8 @@ public class HodTokenLogoutSuccessHandlerTest {
         final HodAuthenticationPrincipal principal = new HodAuthenticationPrincipal(
                 UUID.randomUUID(),
                 UUID.randomUUID(),
-                new ResourceIdentifier("APP-DOMAIN", "APP-NAME"),
-                new UserStoreInformation(UUID.randomUUID(), "STORE-DOMAIN", "STORE-NAME"),
+                new ResourceName("APP-DOMAIN", "APP-NAME"),
+                Resource.builder().uuid(UUID.randomUUID()).domain("STORE-DOMAIN").name("STORE-NAME").build(),
                 new AuthenticationInformation(UUID.randomUUID(), AuthenticationType.LEGACY_API_KEY),
                 new AuthenticationInformation(UUID.randomUUID(), AuthenticationType.LEGACY_API_KEY),
                 null,
@@ -94,9 +94,9 @@ public class HodTokenLogoutSuccessHandlerTest {
                 null
         );
 
-        final HodAuthentication<EntityType.Combined> authentication = new HodAuthentication<>(
+        final Authentication authentication = new HodAuthentication<>(
                 tokenProxy,
-                Collections.<GrantedAuthority>emptySet(),
+                Collections.emptySet(),
                 principal
         );
 

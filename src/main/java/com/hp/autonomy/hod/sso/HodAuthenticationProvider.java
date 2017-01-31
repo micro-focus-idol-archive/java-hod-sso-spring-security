@@ -6,13 +6,10 @@
 package com.hp.autonomy.hod.sso;
 
 import com.google.common.collect.ImmutableSet;
-import com.hp.autonomy.hod.client.api.authentication.ApplicationAndUsers;
-import com.hp.autonomy.hod.client.api.authentication.AuthenticationService;
-import com.hp.autonomy.hod.client.api.authentication.AuthenticationToken;
-import com.hp.autonomy.hod.client.api.authentication.EntityType;
-import com.hp.autonomy.hod.client.api.authentication.TokenType;
+import com.hp.autonomy.hod.client.api.authentication.*;
 import com.hp.autonomy.hod.client.api.authentication.tokeninformation.CombinedTokenInformation;
 import com.hp.autonomy.hod.client.api.resource.ResourceIdentifier;
+import com.hp.autonomy.hod.client.api.resource.ResourceName;
 import com.hp.autonomy.hod.client.api.userstore.user.UserStoreUsersService;
 import com.hp.autonomy.hod.client.error.HodErrorCode;
 import com.hp.autonomy.hod.client.error.HodErrorException;
@@ -217,8 +214,8 @@ public class HodAuthenticationProvider implements AuthenticationProvider {
             throw new AuthenticationServiceException("Simple token type not supported by application");
         }
 
-        final ResourceIdentifier applicationIdentifier = new ResourceIdentifier(applicationAndUsers.getDomain(), applicationAndUsers.getName());
-        final ResourceIdentifier userStore = new ResourceIdentifier(user.getDomain(), user.getUserStore());
+        final ResourceName applicationIdentifier = new ResourceName(applicationAndUsers.getDomain(), applicationAndUsers.getName());
+        final ResourceName userStore = new ResourceName(user.getDomain(), user.getUserStore());
 
         try {
             // Create a combined token
