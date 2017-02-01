@@ -24,7 +24,6 @@ import java.util.Map;
 import java.util.UUID;
 
 import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNot.not;
 import static org.hamcrest.core.IsNull.nullValue;
@@ -113,7 +112,7 @@ public class HodAuthenticationTest {
 
     private <T extends Serializable> T writeAndReadObject(final T object) throws IOException, ClassNotFoundException {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        final ObjectOutputStream objectOutputStream = new ObjectOutputStream(byteArrayOutputStream);
+        final ObjectOutput objectOutputStream = new ObjectOutputStream(byteArrayOutputStream);
         objectOutputStream.writeObject(object);
         objectOutputStream.close();
 

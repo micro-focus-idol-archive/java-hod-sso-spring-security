@@ -6,7 +6,10 @@
 package com.hp.autonomy.hod.sso;
 
 import com.google.common.collect.ImmutableSet;
-import com.hp.autonomy.hod.client.api.authentication.*;
+import com.hp.autonomy.hod.client.api.authentication.AuthenticationService;
+import com.hp.autonomy.hod.client.api.authentication.AuthenticationToken;
+import com.hp.autonomy.hod.client.api.authentication.EntityType;
+import com.hp.autonomy.hod.client.api.authentication.TokenType;
 import com.hp.autonomy.hod.client.api.authentication.tokeninformation.CombinedTokenInformation;
 import com.hp.autonomy.hod.client.api.resource.ResourceIdentifier;
 import com.hp.autonomy.hod.client.api.resource.ResourceName;
@@ -25,13 +28,15 @@ import org.springframework.security.core.GrantedAuthority;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
+import java.util.UUID;
 
 /**
- * AuthenticationProvider which consumes a combined SSO {@link HodTokenAuthentication} and produces {@link HodAuthentication}.
- * This supports both the cookie-less and cookie-dependent SSO processes with server-side combined authentication.
+ * AuthenticationProvider which consumes a combined token and produces a HodAuthentication. This only supports the
+ * cookie-dependent SSO workflow with client-side combined authentication, so {@link HodAuthenticationProvider} is preferred.
+ * @deprecated Use {@link HodAuthenticationProvider} instead
  */
-public class HodAuthenticationProvider implements AuthenticationProvider {
+@Deprecated
+public class CookieHodAuthenticationProvider implements AuthenticationProvider {
     private final GrantedAuthoritiesResolver authoritiesResolver;
     private final TokenRepository tokenRepository;
     private final AuthenticationService authenticationService;
@@ -41,7 +46,7 @@ public class HodAuthenticationProvider implements AuthenticationProvider {
     private final SecurityInfoRetriever securityInfoRetriever;
 
     /**
-     * Creates a new HodAuthenticationProvider which fetches the given user metadata keys. Note: this will only work if
+     * Creates a new CookieHodAuthenticationProvider which fetches the given user metadata keys. Note: this will only work if
      * the combined token has the privilege for the Get User Metadata API on their user store. Uses the given username
      * resolver to set the name for a user's {@link HodAuthenticationPrincipal}. The GrantedAuthoritiesResolver is used
      * to create a collection of authorities for an authenticated user.
@@ -54,7 +59,7 @@ public class HodAuthenticationProvider implements AuthenticationProvider {
      * @param hodUserMetadataResolver The strategy to resolve users' metadata
      * @param securityInfoRetriever   Retrieves the securityInfoString for a given user
      */
-    public HodAuthenticationProvider(
+    public CookieHodAuthenticationProvider(
             final TokenRepository tokenRepository,
             final GrantedAuthoritiesResolver authoritiesResolver,
             final AuthenticationService authenticationService,
@@ -73,7 +78,7 @@ public class HodAuthenticationProvider implements AuthenticationProvider {
     }
 
     /**
-     * Creates a new HodAuthenticationProvider which doesn't fetch user metadata. The GrantedAuthoritiesResolver is used
+     * Creates a new CookieHodAuthenticationProvider which doesn't fetch user metadata. The GrantedAuthoritiesResolver is used
      * to create a collection of authorities for an authenticated user.
      *
      * @param tokenRepository       The token repository in which to store the HP Haven OnDemand Token
@@ -81,7 +86,7 @@ public class HodAuthenticationProvider implements AuthenticationProvider {
      * @param authenticationService The authentication service that will perform the authentication
      * @param unboundTokenService   The unbound token service to get the unbound authentication UUID from
      */
-    public HodAuthenticationProvider(
+    public CookieHodAuthenticationProvider(
             final TokenRepository tokenRepository,
             final GrantedAuthoritiesResolver authoritiesResolver,
             final AuthenticationService authenticationService,
@@ -91,7 +96,7 @@ public class HodAuthenticationProvider implements AuthenticationProvider {
     }
 
     /**
-     * Creates a new HodAuthenticationProvider which fetches the given user metadata keys. Note: this will only work if
+     * Creates a new CookieHodAuthenticationProvider which fetches the given user metadata keys. Note: this will only work if
      * the combined token has the privilege for the Get User Metadata API on their user store. Uses the given username
      * resolver to set the name for a user's {@link HodAuthenticationPrincipal}. The role is given to every user as a
      * granted authority.
@@ -103,7 +108,7 @@ public class HodAuthenticationProvider implements AuthenticationProvider {
      * @param userStoreUsersService   The user store users service that will get user metadata
      * @param hodUserMetadataResolver The strategy to resolve users' metadata
      */
-    public HodAuthenticationProvider(
+    public CookieHodAuthenticationProvider(
             final TokenRepository tokenRepository,
             final String role,
             final AuthenticationService authenticationService,
@@ -114,7 +119,7 @@ public class HodAuthenticationProvider implements AuthenticationProvider {
         this(tokenRepository, new ConstantAuthoritiesResolver(role), authenticationService, unboundTokenService, userStoreUsersService, hodUserMetadataResolver, null);
     }
 
-    public HodAuthenticationProvider(
+    public CookieHodAuthenticationProvider(
             final TokenRepository tokenRepository,
             final String role,
             final AuthenticationService authenticationService,
@@ -127,7 +132,7 @@ public class HodAuthenticationProvider implements AuthenticationProvider {
     }
 
     /**
-     * Creates a new HodAuthenticationProvider which fetches the given user metadata keys. Note: this will only work if
+     * Creates a new CookieHodAuthenticationProvider which fetches the given user metadata keys. Note: this will only work if
      * the combined token has the privilege for the Get User Metadata API on their user store. The role is given to every
      * user as a granted authority.
      *
@@ -137,7 +142,7 @@ public class HodAuthenticationProvider implements AuthenticationProvider {
      * @param unboundTokenService   The unbound token service to get the unbound authentication UUID from
      * @param userStoreUsersService The user store users service that will get user metadata
      */
-    public HodAuthenticationProvider(
+    public CookieHodAuthenticationProvider(
             final TokenRepository tokenRepository,
             final String role,
             final AuthenticationService authenticationService,
@@ -148,7 +153,7 @@ public class HodAuthenticationProvider implements AuthenticationProvider {
     }
 
     /**
-     * Creates a new HodAuthenticationProvider which doesn't fetch user metadata. The role is given to every user as a
+     * Creates a new CookieHodAuthenticationProvider which doesn't fetch user metadata. The role is given to every user as a
      * granted authority.
      *
      * @param tokenRepository       The token repository in which to store the HP Haven OnDemand Token
@@ -156,7 +161,7 @@ public class HodAuthenticationProvider implements AuthenticationProvider {
      * @param authenticationService The authentication service that will perform the authentication
      * @param unboundTokenService   The unbound token service to get the unbound authentication UUID from
      */
-    public HodAuthenticationProvider(
+    public CookieHodAuthenticationProvider(
             final TokenRepository tokenRepository,
             final String role,
             final AuthenticationService authenticationService,
@@ -175,69 +180,36 @@ public class HodAuthenticationProvider implements AuthenticationProvider {
     @Override
     public Authentication authenticate(final Authentication authentication) throws AuthenticationException {
         @SuppressWarnings("unchecked")
-        final HodTokenAuthentication<EntityType.CombinedSso> hodTokenAuthentication = (HodTokenAuthentication<EntityType.CombinedSso>) authentication;
-        final AuthenticationToken<EntityType.CombinedSso, TokenType.Simple> combinedSsoToken = hodTokenAuthentication.getCredentials();
+        final HodTokenAuthentication<EntityType.Combined> hodTokenAuthentication = (HodTokenAuthentication<EntityType.Combined>) authentication;
+        final AuthenticationToken<EntityType.Combined, TokenType.Simple> combinedToken = hodTokenAuthentication.getCredentials();
 
-        final AuthenticationToken<EntityType.Unbound, TokenType.HmacSha1> unboundToken;
-
-        try {
-            // Get an unbound token for the application's authentication
-            unboundToken = unboundTokenService.getUnboundToken();
-        } catch (final HodErrorException e) {
-            // If an authentication error occurs here, it is the application's fault so don't throw BadCredentialsException
-            throw new AuthenticationServiceException("HOD returned an error while authenticating", e);
-        }
-
-        final List<ApplicationAndUsers> applicationAndUsersList;
+        final CombinedTokenInformation combinedTokenInformation;
 
         try {
-            // Determine what applications and users can be authenticated with the combined SSO and unbound tokens
-            applicationAndUsersList = authenticationService.authenticateCombinedGet(combinedSsoToken, unboundToken);
+            // Validates the client-provided token and get information about authenticated entities
+            combinedTokenInformation = authenticationService.getCombinedTokenInformation(combinedToken);
         } catch (final HodErrorException e) {
             if (HodErrorCode.AUTHENTICATION_FAILED == e.getErrorCode()) {
-                // The user's combined SSO token was invalid (we can assume our app token is valid)
                 throw new BadCredentialsException("HOD authentication failed", e);
             } else {
                 throw new AuthenticationServiceException("HOD returned an error while authenticating", e);
             }
         }
 
-        if (applicationAndUsersList.isEmpty()) {
-            // There are no application/user pairs matching the application and user authentication
-            throw new BadCredentialsException("HOD authentication failed");
-        }
-
-        // TODO: Allow the user to choose which application/user pair to log in as
-        // Choose the first application and user
-        final ApplicationAndUsers applicationAndUsers = applicationAndUsersList.get(0);
-        final ApplicationAndUsers.User user = applicationAndUsers.getUsers().get(0);
-
-        if (!applicationAndUsers.getSupportedTokenTypes().contains(TokenType.Simple.INSTANCE.getName())) {
-            // The HodAuthenticationProvider will try to create a simple token
-            throw new AuthenticationServiceException("Simple token type not supported by application");
-        }
-
-        final ResourceName applicationIdentifier = new ResourceName(applicationAndUsers.getDomain(), applicationAndUsers.getName());
-        final ResourceName userStore = new ResourceName(user.getDomain(), user.getUserStore());
-
         try {
-            // Create a combined token
-            final AuthenticationToken<EntityType.Combined, TokenType.Simple> combinedToken = authenticationService.authenticateCombined(
-                    combinedSsoToken,
-                    unboundToken,
-                    applicationIdentifier.getDomain(),
-                    applicationIdentifier.getName(),
-                    userStore.getDomain(),
-                    userStore.getName(),
-                    TokenType.Simple.INSTANCE
-            );
+            final UUID unboundAuthenticationUuid = unboundTokenService.getAuthenticationUuid();
 
-            final CombinedTokenInformation combinedTokenInformation = authenticationService.getCombinedTokenInformation(combinedToken);
+            if (!unboundAuthenticationUuid.equals(combinedTokenInformation.getApplication().getAuthentication().getUuid())) {
+                // The provided combined token was not generated with our unbound token
+                throw new BadCredentialsException("Invalid combined token");
+            }
+
+            final ResourceName userStore = combinedTokenInformation.getUserStore().getResourceName();
+            final ResourceName applicationIdentifier = combinedTokenInformation.getApplication().getResourceName();
+
             final String securityInfo = retrieveSecurityInfo(combinedTokenInformation);
             final TokenProxy<EntityType.Combined, TokenType.Simple> combinedTokenProxy = tokenRepository.insert(combinedToken);
-
             final HodUserMetadata metadata = retrieveMetadata(combinedTokenProxy, combinedTokenInformation, userStore);
-
             final HodAuthenticationPrincipal principal = new HodAuthenticationPrincipal(combinedTokenInformation, metadata.getUserDisplayName(), metadata.getMetadata(), securityInfo);
 
             // Resolve application granted authorities, adding an authority representing the HOD application

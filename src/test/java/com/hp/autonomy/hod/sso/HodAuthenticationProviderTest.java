@@ -124,35 +124,35 @@ public class HodAuthenticationProviderTest {
     public void handlesHodErrorExceptionFromUnboundTokenService() throws HodErrorException {
         when(unboundTokenService.getUnboundToken()).thenThrow(mockAuthenticationFailedException());
 
-        createSimpleProvider().authenticate(new HodTokenAuthentication(combinedSsoToken));
+        createSimpleProvider().authenticate(new HodTokenAuthentication<>(combinedSsoToken));
     }
 
     @Test(expected = BadCredentialsException.class)
     public void failsAuthenticationIfCombinedSsoTokenInvalid() throws HodErrorException {
         when(authenticationService.authenticateCombinedGet(combinedSsoToken, unboundToken)).thenThrow(mockAuthenticationFailedException());
 
-        createSimpleProvider().authenticate(new HodTokenAuthentication(combinedSsoToken));
+        createSimpleProvider().authenticate(new HodTokenAuthentication<>(combinedSsoToken));
     }
 
     @Test(expected = AuthenticationServiceException.class)
     public void handlesHodErrorOnAuthenticateCombinedGet() throws HodErrorException {
         when(authenticationService.authenticateCombinedGet(combinedSsoToken, unboundToken)).thenThrow(mockFatalDatabaseException());
 
-        createSimpleProvider().authenticate(new HodTokenAuthentication(combinedSsoToken));
+        createSimpleProvider().authenticate(new HodTokenAuthentication<>(combinedSsoToken));
     }
 
     @Test(expected = BadCredentialsException.class)
     public void failsAuthenticationIfNoApplications() throws HodErrorException {
         when(authenticationService.authenticateCombinedGet(combinedSsoToken, unboundToken)).thenReturn(Collections.emptyList());
 
-        createSimpleProvider().authenticate(new HodTokenAuthentication(combinedSsoToken));
+        createSimpleProvider().authenticate(new HodTokenAuthentication<>(combinedSsoToken));
     }
 
     @Test(expected = AuthenticationServiceException.class)
     public void failsAuthenticationIfSimpleTokenTypeNotAllowed() throws HodErrorException {
         when(authenticationService.authenticateCombinedGet(combinedSsoToken, unboundToken)).thenReturn(mockApplicationAndUsersList(TokenType.HmacSha1.INSTANCE));
 
-        createSimpleProvider().authenticate(new HodTokenAuthentication(combinedSsoToken));
+        createSimpleProvider().authenticate(new HodTokenAuthentication<>(combinedSsoToken));
     }
 
     @Test(expected = AuthenticationServiceException.class)
@@ -167,28 +167,28 @@ public class HodAuthenticationProviderTest {
                 TokenType.Simple.INSTANCE
         )).thenThrow(mockFatalDatabaseException());
 
-        createSimpleProvider().authenticate(new HodTokenAuthentication(combinedSsoToken));
+        createSimpleProvider().authenticate(new HodTokenAuthentication<>(combinedSsoToken));
     }
 
     @Test(expected = AuthenticationServiceException.class)
     public void handlesHodErrorExceptionFromCombinedTokenInformation() throws HodErrorException {
         when(authenticationService.getCombinedTokenInformation(combinedToken)).thenThrow(mockFatalDatabaseException());
 
-        createSimpleProvider().authenticate(new HodTokenAuthentication(combinedSsoToken));
+        createSimpleProvider().authenticate(new HodTokenAuthentication<>(combinedSsoToken));
     }
 
     @Test(expected = AuthenticationServiceException.class)
     public void handlesIOExceptionFromTokenRepository() throws IOException {
         when(tokenRepository.insert(combinedToken)).thenThrow(mock(IOException.class));
 
-        createSimpleProvider().authenticate(new HodTokenAuthentication(combinedSsoToken));
+        createSimpleProvider().authenticate(new HodTokenAuthentication<>(combinedSsoToken));
     }
 
 
     @Test
     public void authenticatesWithRole() throws HodErrorException, IOException {
         final HodAuthenticationProvider provider = createSimpleProvider();
-        final Authentication tokenAuthentication = new HodTokenAuthentication(combinedSsoToken);
+        final Authentication tokenAuthentication = new HodTokenAuthentication<>(combinedSsoToken);
 
         @SuppressWarnings("unchecked")
         final HodAuthentication<EntityType.Combined> authentication = (HodAuthentication<EntityType.Combined>) provider.authenticate(tokenAuthentication);
@@ -219,7 +219,7 @@ public class HodAuthenticationProviderTest {
                 .build();
 
         final AuthenticationProvider provider = new HodAuthenticationProvider(tokenRepository, resolver, authenticationService, unboundTokenService);
-        final Authentication authentication = provider.authenticate(new HodTokenAuthentication(combinedSsoToken));
+        final Authentication authentication = provider.authenticate(new HodTokenAuthentication<>(combinedSsoToken));
 
         assertThat(authentication.getAuthorities(), containsInAnyOrder(
                 new SimpleGrantedAuthority("ROLE_1"),
@@ -251,7 +251,7 @@ public class HodAuthenticationProviderTest {
         when(userStoreUsersService.getUserMetadata(tokenProxy, new ResourceName(USERSTORE_DOMAIN, USERSTORE_NAME), USER_UUID))
                 .thenReturn(hodMetadata);
 
-        final Authentication authentication = provider.authenticate(new HodTokenAuthentication(combinedSsoToken));
+        final Authentication authentication = provider.authenticate(new HodTokenAuthentication<>(combinedSsoToken));
         assertThat(authentication.getName(), is("fred"));
     }
 
