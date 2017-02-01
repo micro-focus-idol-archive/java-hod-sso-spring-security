@@ -31,4 +31,26 @@ public interface HodAuthenticationRequestService {
      */
     SignedRequest getSsoPageCombinedPatchRequest(URL redirectUrl) throws HodErrorException, InvalidOriginException;
 
+    /**
+     * Generates a signed list applications request
+     * @deprecated Use the cookie-less SSO process instead
+     * @return A signed request which when sent to HP Haven OnDemand will return a list of applications
+     * @throws HodErrorException If an error occurs communicating with HP Haven OnDemand
+     */
+    @Deprecated
+    SignedRequest getListApplicationRequest() throws HodErrorException;
+
+    /**
+     * Generates a signed combined token request
+     * @deprecated Use the cookie-less SSO process instead
+     * @param domain The HP Haven OnDemand domain to authenticate against
+     * @param application The HP Haven OnDemand domain to authenticate against
+     * @param userStoreDomain The HP Haven OnDemand user store domain to authenticate against
+     * @param userStoreName The HP Haven OnDemand user store to authenticate against
+     * @return A signed request which when sent to HP Haven OnDemand will return a combined token
+     * @throws HodErrorException If an error occurs communicating with HP Haven OnDemand
+     */
+    @Deprecated
+    SignedRequest getCombinedRequest(String domain, String application, String userStoreDomain, String userStoreName) throws HodErrorException;
+
 }
