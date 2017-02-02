@@ -63,7 +63,7 @@ public class UnboundTokenServiceImplTest {
         when(config.getApiKey()).thenReturn(API_KEY);
 
         @SuppressWarnings("unchecked")
-        final ConfigService<? extends HodSsoConfig> configService = mock(ConfigService.class);
+        final ConfigService<HodSsoConfig> configService = mock(ConfigService.class);
 
         when(configService.getConfig()).thenReturn(config);
 
@@ -296,23 +296,13 @@ public class UnboundTokenServiceImplTest {
 
     private static class UnboundTokenGetter extends UnboundTokenServiceRunnable<AuthenticationToken<EntityType.Unbound, TokenType.HmacSha1>> {
         private UnboundTokenGetter(final UnboundTokenService<TokenType.HmacSha1> unboundTokenService, final List<Try<AuthenticationToken<EntityType.Unbound, TokenType.HmacSha1>>> outputs, final CountDownLatch latch) {
-            super(unboundTokenService, outputs, latch, new UnboundTokenServiceAction<AuthenticationToken<EntityType.Unbound, TokenType.HmacSha1>>() {
-                @Override
-                public AuthenticationToken<EntityType.Unbound, TokenType.HmacSha1> callService(final UnboundTokenService<TokenType.HmacSha1> service) throws HodErrorException {
-                    return service.getUnboundToken();
-                }
-            });
+            super(unboundTokenService, outputs, latch, UnboundTokenService::getUnboundToken);
         }
     }
 
     private static class UnboundAuthenticationUUIDGetter extends UnboundTokenServiceRunnable<UUID> {
         private UnboundAuthenticationUUIDGetter(final UnboundTokenService<TokenType.HmacSha1> unboundTokenService, final List<Try<UUID>> outputs, final CountDownLatch latch) {
-            super(unboundTokenService, outputs, latch, new UnboundTokenServiceAction<UUID>() {
-                @Override
-                public UUID callService(final UnboundTokenService<TokenType.HmacSha1> service) throws HodErrorException {
-                    return service.getAuthenticationUuid();
-                }
-            });
+            super(unboundTokenService, outputs, latch, UnboundTokenService::getAuthenticationUuid);
         }
     }
 

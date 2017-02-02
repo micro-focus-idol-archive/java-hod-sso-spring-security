@@ -20,12 +20,13 @@ public interface UnboundTokenService<T extends TokenType> {
 
     /**
      * @return An unbound token from HP Haven OnDemand
-     * @throws HodErrorException
+     * @throws HodErrorException If a problem occurs
      */
     AuthenticationToken<EntityType.Unbound, T> getUnboundToken() throws HodErrorException;
 
     /**
      * @return The UUID of the authentication used to generate unbound tokens
+     * @throws HodErrorException If a problem occurs
      */
     UUID getAuthenticationUuid() throws HodErrorException;
 

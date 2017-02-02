@@ -10,20 +10,14 @@ import com.hp.autonomy.hod.client.api.authentication.AuthenticationType;
 import com.hp.autonomy.hod.client.api.authentication.EntityType;
 import com.hp.autonomy.hod.client.api.authentication.TokenType;
 import com.hp.autonomy.hod.client.api.authentication.tokeninformation.AuthenticationInformation;
-import com.hp.autonomy.hod.client.api.authentication.tokeninformation.UserStoreInformation;
-import com.hp.autonomy.hod.client.api.resource.ResourceIdentifier;
+import com.hp.autonomy.hod.client.api.resource.Resource;
+import com.hp.autonomy.hod.client.api.resource.ResourceName;
 import com.hp.autonomy.hod.client.token.TokenProxy;
 import org.junit.Test;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
+import java.io.*;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
@@ -39,7 +33,7 @@ public class HodAuthenticationTest {
     private static final UUID TENANT_UUID = UUID.fromString("852bbbc1-91cd-429b-8e4e-ff29a31678e5");
     private static final UUID USER_UUID = UUID.fromString("847e1504-5c4d-4c59-87e8-87634f3f3b17");
     private static final String NAME = "fred";
-    private static final ResourceIdentifier APPLICATION = new ResourceIdentifier("app-domain", "app-name");
+    private static final ResourceName APPLICATION = new ResourceName("app-domain", "app-name");
 
     private static final AuthenticationInformation APP_AUTHENTICATION = new AuthenticationInformation(
             UUID.fromString("7b012328-78bf-11e5-8bcf-feff819cdc9f"),
@@ -51,11 +45,11 @@ public class HodAuthenticationTest {
             AuthenticationType.LEGACY_API_KEY
     );
 
-    private static final UserStoreInformation USER_STORE = new UserStoreInformation(
-            UUID.fromString("5dcc0ec6-78bf-11e5-8bcf-feff819cdc9f"),
-            "store-domain",
-            "store-name"
-    );
+    private static final Resource USER_STORE = Resource.builder()
+            .uuid(UUID.fromString("5dcc0ec6-78bf-11e5-8bcf-feff819cdc9f"))
+            .domain("store-domain")
+            .name("store-name")
+            .build();
 
     private static final Map<String, Serializable> METADATA = ImmutableMap.<String, Serializable>builder()
             .put("name", "fred")
@@ -118,7 +112,7 @@ public class HodAuthenticationTest {
 
     private <T extends Serializable> T writeAndReadObject(final T object) throws IOException, ClassNotFoundException {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        final ObjectOutputStream objectOutputStream = new ObjectOutputStream(byteArrayOutputStream);
+        final ObjectOutput objectOutputStream = new ObjectOutputStream(byteArrayOutputStream);
         objectOutputStream.writeObject(object);
         objectOutputStream.close();
 

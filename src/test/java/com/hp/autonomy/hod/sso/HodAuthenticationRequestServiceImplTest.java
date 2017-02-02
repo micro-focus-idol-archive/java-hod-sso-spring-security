@@ -12,12 +12,9 @@ import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Matchers;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 
@@ -30,7 +27,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class HodAuthenticationRequestServiceImplTest {
-    private static final AuthenticationToken<EntityType.Unbound, TokenType.HmacSha1> AUTHENTICATION_TOKEN = new AuthenticationToken<EntityType.Unbound, TokenType.HmacSha1>(
+    private static final AuthenticationToken<EntityType.Unbound, TokenType.HmacSha1> AUTHENTICATION_TOKEN = new AuthenticationToken<>(
             EntityType.Unbound.INSTANCE,
             TokenType.HmacSha1.INSTANCE,
             DateTime.now(),
@@ -53,7 +50,7 @@ public class HodAuthenticationRequestServiceImplTest {
         when(config.getAllowedOrigins()).thenReturn(ALLOWED_ORIGINS);
         when(config.getSsoUrl()).thenReturn(new URL("https://dev.havenondemand.com/sso.html"));
 
-        final ConfigService<? extends HodSsoConfig> configService = mock(ConfigService.class);
+        final ConfigService<HodSsoConfig> configService = mock(ConfigService.class);
         when(configService.getConfig()).thenReturn(config);
 
         authenticationService = mock(AuthenticationService.class);
@@ -71,7 +68,7 @@ public class HodAuthenticationRequestServiceImplTest {
     @Test
     public void getCombinedPatchRequest() throws HodErrorException {
         final SignedRequest expectedOutput = mock(SignedRequest.class);
-        when(authenticationService.combinedPatchRequest(Matchers.<Collection<String>>any(), eq(AUTHENTICATION_TOKEN))).thenReturn(expectedOutput);
+        when(authenticationService.combinedPatchRequest(Matchers.any(), eq(AUTHENTICATION_TOKEN))).thenReturn(expectedOutput);
 
         assertSame(expectedOutput, requestService.getCombinedPatchRequest());
     }
@@ -80,13 +77,10 @@ public class HodAuthenticationRequestServiceImplTest {
     public void getSsoPageCombinedPatchRequest() throws HodErrorException, MalformedURLException, InvalidOriginException {
         final URL redirectUrl = new URL("http://127.0.0.1:8080/sso");
 
-        when(authenticationService.combinedPatchRequest(Matchers.<Collection<String>>any(), Matchers.<String>any(), eq(AUTHENTICATION_TOKEN))).thenAnswer(new Answer<SignedRequest>() {
-            @Override
-            public SignedRequest answer(final InvocationOnMock invocationOnMock) {
-                final Object[] arguments = invocationOnMock.getArguments();
-                // If the AuthenticationService was passed the correct arguments, return a SignedRequest, otherwise, return null
-                return Collections.singleton("https://dev.havenondemand.com").equals(arguments[0]) && redirectUrl.toString().equals(arguments[1]) ? mock(SignedRequest.class) : null;
-            }
+        when(authenticationService.combinedPatchRequest(Matchers.any(), Matchers.any(), eq(AUTHENTICATION_TOKEN))).thenAnswer(invocationOnMock -> {
+            final Object[] arguments = invocationOnMock.getArguments();
+            // If the AuthenticationService was passed the correct arguments, return a SignedRequest, otherwise, return null
+            return Collections.singleton("https://dev.havenondemand.com").equals(arguments[0]) && redirectUrl.toString().equals(arguments[1]) ? mock(SignedRequest.class) : null;
         });
 
         final SignedRequest output = requestService.getSsoPageCombinedPatchRequest(redirectUrl);

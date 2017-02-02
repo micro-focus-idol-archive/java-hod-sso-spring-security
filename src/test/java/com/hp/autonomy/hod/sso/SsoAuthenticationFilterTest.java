@@ -1,5 +1,6 @@
 package com.hp.autonomy.hod.sso;
 
+import com.hp.autonomy.hod.client.api.authentication.EntityType;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -22,14 +23,14 @@ import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class SsoAuthenticationFilterTest {
-    private SsoAuthenticationFilter filter;
+    private SsoAuthenticationFilter<EntityType.CombinedSso> filter;
 
     @Mock
     private AuthenticationManager authenticationManager;
 
     @Before
     public void initialise() {
-        filter = new SsoAuthenticationFilter("/authenticate");
+        filter = new SsoAuthenticationFilter<>("/authenticate", EntityType.CombinedSso.INSTANCE);
         filter.setAuthenticationManager(authenticationManager);
         filter.afterPropertiesSet();
     }
@@ -45,7 +46,7 @@ public class SsoAuthenticationFilterTest {
     @Test
     public void authenticatesWithAuthenticationManager() throws IOException, ServletException {
         final Authentication expectedAuthentication = mock(Authentication.class);
-        when(authenticationManager.authenticate(Matchers.<Authentication>any())).thenReturn(expectedAuthentication);
+        when(authenticationManager.authenticate(Matchers.any())).thenReturn(expectedAuthentication);
 
         final HttpServletRequest request = mock(HttpServletRequest.class);
         when(request.getParameter("expiry")).thenReturn("1475037954");
