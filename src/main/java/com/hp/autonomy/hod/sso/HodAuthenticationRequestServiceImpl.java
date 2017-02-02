@@ -64,6 +64,32 @@ public class HodAuthenticationRequestServiceImpl implements HodAuthenticationReq
         }
     }
 
+    @Override
+    @Deprecated
+    public SignedRequest getListApplicationRequest() throws HodErrorException {
+        return authenticationService.combinedGetRequest(getAllowedOrigins(), unboundTokenService.getUnboundToken());
+    }
+
+    @Override
+    @Deprecated
+    public SignedRequest getCombinedRequest(
+            final String domain,
+            final String application,
+            final String userStoreDomain,
+            final String userStoreName
+    ) throws HodErrorException {
+        return authenticationService.combinedRequest(
+                getAllowedOrigins(),
+                unboundTokenService.getUnboundToken(),
+                domain,
+                application,
+                userStoreDomain,
+                userStoreName,
+                TokenType.Simple.INSTANCE,
+                true
+        );
+    }
+
     private Collection<String> getAllowedOrigins() {
         return configService.getConfig().getAllowedOrigins();
     }

@@ -12,15 +12,15 @@ import org.springframework.security.authentication.AbstractAuthenticationToken;
 
 /**
  * An Authentication representing an unverified HP Haven OnDemand combined SSO token.
- *
+ * <p>
  * This authentication is never authenticated.
  */
-public class HodTokenAuthentication extends AbstractAuthenticationToken {
+public class HodTokenAuthentication<E extends EntityType> extends AbstractAuthenticationToken {
     private static final long serialVersionUID = -643920242131375593L;
 
-    private AuthenticationToken<EntityType.CombinedSso, TokenType.Simple> token;
+    private AuthenticationToken<E, TokenType.Simple> token;
 
-    public HodTokenAuthentication(final AuthenticationToken<EntityType.CombinedSso, TokenType.Simple> token) {
+    public HodTokenAuthentication(final AuthenticationToken<E, TokenType.Simple> token) {
         super(null);
         super.setAuthenticated(false);
         this.token = token;
@@ -30,12 +30,13 @@ public class HodTokenAuthentication extends AbstractAuthenticationToken {
      * @return The HP Haven OnDemand combined token
      */
     @Override
-    public AuthenticationToken<EntityType.CombinedSso, TokenType.Simple> getCredentials() {
+    public AuthenticationToken<E, TokenType.Simple> getCredentials() {
         return token;
     }
 
     /**
      * This method returns null as the user details have not been obtained yet
+     *
      * @return null
      */
     @Override
@@ -46,6 +47,7 @@ public class HodTokenAuthentication extends AbstractAuthenticationToken {
     /**
      * Sets the trusted state of the authentication. This can only be set to false. Since the authentication's initial
      * state is false, there is no need to call this method
+     *
      * @param isAuthenticated True if the token should be trusted; false otherwise
      * @throws IllegalArgumentException If isAuthenticated is set to true
      */

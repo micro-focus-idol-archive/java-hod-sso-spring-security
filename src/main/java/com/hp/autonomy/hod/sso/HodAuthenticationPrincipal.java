@@ -7,8 +7,8 @@ package com.hp.autonomy.hod.sso;
 
 import com.hp.autonomy.hod.client.api.authentication.tokeninformation.AuthenticationInformation;
 import com.hp.autonomy.hod.client.api.authentication.tokeninformation.CombinedTokenInformation;
-import com.hp.autonomy.hod.client.api.authentication.tokeninformation.UserStoreInformation;
-import com.hp.autonomy.hod.client.api.resource.ResourceIdentifier;
+import com.hp.autonomy.hod.client.api.resource.Resource;
+import com.hp.autonomy.hod.client.api.resource.ResourceName;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import org.apache.commons.lang.StringUtils;
@@ -26,12 +26,12 @@ import java.util.UUID;
 @Getter
 @EqualsAndHashCode
 public class HodAuthenticationPrincipal implements Principal, Serializable {
-    private static final long serialVersionUID = 8740573190952973889L;
+    private static final long serialVersionUID = 1968689406768358794L;
 
     private final UUID tenantUuid;
     private final UUID userUuid;
-    private final ResourceIdentifier application;
-    private final UserStoreInformation userStoreInformation;
+    private final ResourceName application;
+    private final Resource userStoreInformation;
     private final AuthenticationInformation applicationAuthentication;
     private final AuthenticationInformation userAuthentication;
     private final String name;
@@ -41,8 +41,8 @@ public class HodAuthenticationPrincipal implements Principal, Serializable {
     public HodAuthenticationPrincipal(
             final UUID tenantUuid,
             final UUID userUuid,
-            final ResourceIdentifier application,
-            final UserStoreInformation userStoreInformation,
+            final ResourceName application,
+            final Resource userStoreInformation,
             final AuthenticationInformation applicationAuthentication,
             final AuthenticationInformation userAuthentication,
             final String name,
@@ -65,7 +65,7 @@ public class HodAuthenticationPrincipal implements Principal, Serializable {
         this(
                 tokenInformation.getTenantUuid(),
                 tokenInformation.getUser().getUuid(),
-                tokenInformation.getApplication().getIdentifier(),
+                tokenInformation.getApplication().getResourceName(),
                 tokenInformation.getUserStore(),
                 tokenInformation.getApplication().getAuthentication(),
                 tokenInformation.getUser().getAuthentication(),
@@ -79,7 +79,7 @@ public class HodAuthenticationPrincipal implements Principal, Serializable {
         this(
                 tokenInformation.getTenantUuid(),
                 tokenInformation.getUser().getUuid(),
-                tokenInformation.getApplication().getIdentifier(),
+                tokenInformation.getApplication().getResourceName(),
                 tokenInformation.getUserStore(),
                 tokenInformation.getApplication().getAuthentication(),
                 tokenInformation.getUser().getAuthentication(),
@@ -93,7 +93,7 @@ public class HodAuthenticationPrincipal implements Principal, Serializable {
     public String toString() {
         return new ToStringBuilder(this)
                 .append("tenantUuid", tenantUuid)
-                .append("userStore", userStoreInformation.getIdentifier())
+                .append("userStore", userStoreInformation.getResourceName())
                 .append("userUuid", userUuid)
                 .toString();
     }

@@ -25,9 +25,12 @@ import java.io.IOException;
 /**
  * An authentication processing filter which parses a combined SSO token from a POST body.
  */
-public class SsoAuthenticationFilter extends AbstractAuthenticationProcessingFilter {
-    public SsoAuthenticationFilter(final String authenticationPath) {
+public class SsoAuthenticationFilter<E extends EntityType> extends AbstractAuthenticationProcessingFilter {
+    private final E entityType;
+
+    public SsoAuthenticationFilter(final String authenticationPath, final E entityType) {
         super(new AntPathRequestMatcher(authenticationPath, "POST"));
+        this.entityType = entityType;
     }
 
     @Override
@@ -40,12 +43,12 @@ public class SsoAuthenticationFilter extends AbstractAuthenticationProcessingFil
 
         try {
             expiry = new DateTime(Long.parseLong(request.getParameter("expiry")));
-        } catch (final NumberFormatException e) {
+        } catch (final NumberFormatException ignored) {
             throw new BadCredentialsException("Invalid combined SSO token");
         }
 
-        final AuthenticationToken<EntityType.CombinedSso, TokenType.Simple> token = new AuthenticationToken<>(
-            EntityType.CombinedSso.INSTANCE,
+        final AuthenticationToken<E, TokenType.Simple> token = new AuthenticationToken<>(
+            entityType,
             TokenType.Simple.INSTANCE,
             request.getParameter("type"),
             expiry,
@@ -54,6 +57,6 @@ public class SsoAuthenticationFilter extends AbstractAuthenticationProcessingFil
             null
         );
 
-        return getAuthenticationManager().authenticate(new HodTokenAuthentication(token));
+        return getAuthenticationManager().authenticate(new HodTokenAuthentication<>(token));
     }
 }
