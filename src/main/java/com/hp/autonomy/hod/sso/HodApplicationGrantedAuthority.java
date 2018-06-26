@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Hewlett-Packard Development Company, L.P.
+ * Copyright 2015-2018 Micro Focus International plc.
  * Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
  */
 
@@ -10,7 +10,7 @@ import lombok.EqualsAndHashCode;
 import org.springframework.security.core.GrantedAuthority;
 
 /**
- * Represents the authority to use a HP Haven OnDemand application
+ * Represents the authority to use a Micro Focus Haven OnDemand application
  */
 @EqualsAndHashCode
 public class HodApplicationGrantedAuthority implements GrantedAuthority {

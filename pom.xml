@@ -14,13 +14,13 @@
     <artifactId>hod-sso-spring-security</artifactId>
     <version>0.10.0-SNAPSHOT</version>
 
-    <name>HP Haven OnDemand SSO Spring Security</name>
-    <description>Library to assist with using HP Haven OnDemand SSO with Spring Security</description>
-    <url>https://github.com/hpautonomy/hod-sso-spring-security</url>
+    <name>Micro Focus Haven OnDemand SSO Spring Security</name>
+    <description>Library to assist with using Micro Focus Haven OnDemand SSO with Spring Security</description>
+    <url>https://github.com/microfocus-idol/hod-sso-spring-security</url>
 
     <organization>
-        <name>Hewlett-Packard Development Company, L.P.</name>
-        <url>http://www.hp.com/</url>
+        <name>Micro Focus International plc.</name>
+        <url>http://www.microfocus.com/</url>
     </organization>
 
     <inceptionYear>2015</inceptionYear>
@@ -35,33 +35,24 @@
     <developers>
         <developer>
             <name>Matthew Gordon</name>
-            <email>matthew.gordon@hp.com</email>
-            <organization>HP</organization>
-            <organizationUrl>http://www.hp.com</organizationUrl>
         </developer>
         <developer>
             <name>Alex Scown</name>
-            <email>alex.scown@hp.com</email>
-            <organization>HP</organization>
-            <organizationUrl>http://www.hp.com</organizationUrl>
         </developer>
         <developer>
             <name>Will Byrne</name>
-            <email>will.byrne@hpe.com</email>
-            <organization>Hewlett Packard Enterprise</organization>
-            <organizationUrl>http://www.hpe.com</organizationUrl>
         </developer>
     </developers>
 
     <scm>
-        <connection>scm:git:git@github.com:hpautonomy/hod-sso-spring-security.git</connection>
-        <developerConnection>scm:git:git@github.com:hpautonomy/hod-sso-spring-security.git</developerConnection>
-        <url>git@github.com:hpautonomy/hod-sso-spring-security.git</url>
+        <connection>scm:git:git@github.com:microfocus-idol/hod-sso-spring-security.git</connection>
+        <developerConnection>scm:git:git@github.com:microfocus-idol/hod-sso-spring-security.git</developerConnection>
+        <url>git@github.com:microfocus-idol/hod-sso-spring-security.git</url>
     </scm>
 
     <issueManagement>
         <system>GitHub</system>
-        <url>https://github.com/hpautonomy/hod-sso-spring-security/issues</url>
+        <url>https://github.com/microfocus-idol/hod-sso-spring-security/issues</url>
     </issueManagement>
 
     <properties>

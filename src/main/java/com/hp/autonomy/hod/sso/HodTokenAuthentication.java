@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Hewlett-Packard Development Company, L.P.
+ * Copyright 2015-2018 Micro Focus International plc.
  * Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
  */
 
@@ -11,7 +11,7 @@ import com.hp.autonomy.hod.client.api.authentication.TokenType;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 
 /**
- * An Authentication representing an unverified HP Haven OnDemand combined SSO token.
+ * An Authentication representing an unverified Micro Focus Haven OnDemand combined SSO token.
  * <p>
  * This authentication is never authenticated.
  */
@@ -27,7 +27,7 @@ public class HodTokenAuthentication<E extends EntityType> extends AbstractAuthen
     }
 
     /**
-     * @return The HP Haven OnDemand combined token
+     * @return The Micro Focus Haven OnDemand combined token
      */
     @Override
     public AuthenticationToken<E, TokenType.Simple> getCredentials() {
@@ -61,7 +61,7 @@ public class HodTokenAuthentication<E extends EntityType> extends AbstractAuthen
     }
 
     /**
-     * Removes the HP Haven OnDemand combined token from the authentication
+     * Removes the Micro Focus Haven OnDemand combined token from the authentication
      */
     @Override
     public void eraseCredentials() {
