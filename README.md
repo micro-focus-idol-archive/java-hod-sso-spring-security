@@ -1,5 +1,5 @@
-# HP Haven OnDemand SSO for Spring Security
-Java library for working with HPE Haven OnDemand SSO
+# Micro Focus Haven OnDemand SSO for Spring Security
+Java library for working with Micro Focus Haven OnDemand SSO
 
 ## Usage
 The library is available from the central Maven repository.
@@ -74,5 +74,6 @@ Yes
 ## License
 Copyright 2015 Hewlett-Packard Development Company, L.P.
 Copyright 2015-2016 Hewlett Packard Enterprise Development LP
+Copyright 2017-2018 Micro Focus International plc.
 
 Licensed under the MIT License (the "License"); you may not use this project except in compliance with the License.

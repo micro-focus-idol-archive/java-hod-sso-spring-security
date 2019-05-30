@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Hewlett-Packard Development Company, L.P.
+ * Copyright 2015-2018 Micro Focus International plc.
  * Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
  */
 
@@ -11,7 +11,7 @@ import java.net.URL;
 import java.util.Set;
 
 /**
- * A configuration object which provides the necessary information to authenticate with HP Haven OnDemand SSO
+ * A configuration object which provides the necessary information to authenticate with Micro Focus Haven OnDemand SSO
  */
 public interface HodSsoConfig {
 

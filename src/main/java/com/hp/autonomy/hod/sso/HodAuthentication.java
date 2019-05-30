@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Hewlett-Packard Development Company, L.P.
+ * Copyright 2015-2018 Micro Focus International plc.
  * Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
  */
 
@@ -16,7 +16,7 @@ import org.springframework.security.core.GrantedAuthority;
 import java.util.Collection;
 
 /**
- * Spring Security Authentication which combines an HP Haven OnDemand {@link TokenProxy} with a username and application
+ * Spring Security Authentication which combines an Micro Focus Haven OnDemand {@link TokenProxy} with a username and application
  * details. This Authentication is authenticated at creation time.
  * For access control decisions, the GrantedAuthorities should be checked for the correct
  * {@link HodApplicationGrantedAuthority}.
@@ -57,7 +57,7 @@ public class HodAuthentication<E extends EntityType> extends AbstractAuthenticat
     }
 
     /**
-     * @return The HP Haven OnDemand entities authenticated by this token
+     * @return The Micro Focus Haven OnDemand entities authenticated by this token
      */
     @Override
     public HodAuthenticationPrincipal getPrincipal() {

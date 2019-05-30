@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2017 Hewlett-Packard Development Company, L.P.
+ * Copyright 2015-2018 Micro Focus International plc.
  * Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
  */
 
@@ -51,7 +51,7 @@ public class CookieHodAuthenticationProvider implements AuthenticationProvider {
      * resolver to set the name for a user's {@link HodAuthenticationPrincipal}. The GrantedAuthoritiesResolver is used
      * to create a collection of authorities for an authenticated user.
      *
-     * @param tokenRepository         The token repository in which to store the HP Haven OnDemand Token
+     * @param tokenRepository         The token repository in which to store the Micro Focus Haven OnDemand Token
      * @param authoritiesResolver     Resolves authorities for authenticated users
      * @param authenticationService   The authentication service that will perform the authentication
      * @param unboundTokenService     The unbound token service to get the unbound authentication UUID from
@@ -81,7 +81,7 @@ public class CookieHodAuthenticationProvider implements AuthenticationProvider {
      * Creates a new CookieHodAuthenticationProvider which doesn't fetch user metadata. The GrantedAuthoritiesResolver is used
      * to create a collection of authorities for an authenticated user.
      *
-     * @param tokenRepository       The token repository in which to store the HP Haven OnDemand Token
+     * @param tokenRepository       The token repository in which to store the Micro Focus Haven OnDemand Token
      * @param authoritiesResolver   Resolves authorities for authenticated users
      * @param authenticationService The authentication service that will perform the authentication
      * @param unboundTokenService   The unbound token service to get the unbound authentication UUID from
@@ -101,8 +101,8 @@ public class CookieHodAuthenticationProvider implements AuthenticationProvider {
      * resolver to set the name for a user's {@link HodAuthenticationPrincipal}. The role is given to every user as a
      * granted authority.
      *
-     * @param tokenRepository         The token repository in which to store the HP Haven OnDemand Token
-     * @param role                    The role to assign to users authenticated with HP Haven OnDemand SSO
+     * @param tokenRepository         The token repository in which to store the Micro Focus Haven OnDemand Token
+     * @param role                    The role to assign to users authenticated with Micro Focus Haven OnDemand SSO
      * @param authenticationService   The authentication service that will perform the authentication
      * @param unboundTokenService     The unbound token service to get the unbound authentication UUID from
      * @param userStoreUsersService   The user store users service that will get user metadata
@@ -136,8 +136,8 @@ public class CookieHodAuthenticationProvider implements AuthenticationProvider {
      * the combined token has the privilege for the Get User Metadata API on their user store. The role is given to every
      * user as a granted authority.
      *
-     * @param tokenRepository       The token repository in which to store the HP Haven OnDemand Token
-     * @param role                  The role to assign to users authenticated with HP Haven OnDemand SSO
+     * @param tokenRepository       The token repository in which to store the Micro Focus Haven OnDemand Token
+     * @param role                  The role to assign to users authenticated with Micro Focus Haven OnDemand SSO
      * @param authenticationService The authentication service that will perform the authentication
      * @param unboundTokenService   The unbound token service to get the unbound authentication UUID from
      * @param userStoreUsersService The user store users service that will get user metadata
@@ -156,8 +156,8 @@ public class CookieHodAuthenticationProvider implements AuthenticationProvider {
      * Creates a new CookieHodAuthenticationProvider which doesn't fetch user metadata. The role is given to every user as a
      * granted authority.
      *
-     * @param tokenRepository       The token repository in which to store the HP Haven OnDemand Token
-     * @param role                  The role to assign to users authenticated with HP Haven OnDemand SSO
+     * @param tokenRepository       The token repository in which to store the Micro Focus Haven OnDemand Token
+     * @param role                  The role to assign to users authenticated with Micro Focus Haven OnDemand SSO
      * @param authenticationService The authentication service that will perform the authentication
      * @param unboundTokenService   The unbound token service to get the unbound authentication UUID from
      */
